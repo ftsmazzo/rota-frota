@@ -1,0 +1,23 @@
+import type {FleetData,Inspection,Vehicle} from './model';
+export type VehicleTrip={id:string;vehicleId:string;driverId:string;departure?:Inspection;returned?:Inspection;status:'active'|'completed'|'incomplete';distance:number|null;reason?:string};
+export function isTripPair(departure:Inspection|undefined,returned:Inspection){return !!departure&&departure.kind==='departure'&&returned.kind==='return'&&departure.vehicleId===returned.vehicleId&&returned.finishedAt>=departure.finishedAt&&returned.odometer>=departure.odometer;}
+export function buildTrips(inspections:Inspection[]):VehicleTrip[]{
+  const departures=inspections.filter(i=>i.kind==='departure'),returns=inspections.filter(i=>i.kind==='return');
+  const used=new Set<string>(),trips:VehicleTrip[]=[],latestByVehicle=new Map<string,Inspection>(),returnsByDeparture=new Map<string,Inspection[]>();
+  for(const i of inspections)if(!latestByVehicle.has(i.vehicleId)||i.finishedAt>latestByVehicle.get(i.vehicleId)!.finishedAt)latestByVehicle.set(i.vehicleId,i);
+  for(const r of returns)if(r.previousId){const list=returnsByDeparture.get(r.previousId)||[];list.push(r);returnsByDeparture.set(r.previousId,list);}
+  for(const departure of departures){
+    const matching=(returnsByDeparture.get(departure.id)||[]).filter(r=>isTripPair(departure,r));
+    const latest=latestByVehicle.get(departure.vehicleId);
+    if(matching.length===1){const returned=matching[0];used.add(returned.id);trips.push({id:departure.id,vehicleId:departure.vehicleId,driverId:departure.driverId,departure,returned,status:'completed',distance:returned.odometer-departure.odometer});}
+    else trips.push({id:departure.id,vehicleId:departure.vehicleId,driverId:departure.driverId,departure,status:latest?.id===departure.id?'active':'incomplete',distance:null,reason:matching.length>1?'Há mais de um retorno relacionado. Confira o vínculo.':latest?.id===departure.id?undefined:'Saída histórica sem retorno vinculado.'});
+  }
+  for(const returned of returns.filter(r=>!used.has(r.id)))trips.push({id:'unlinked:'+returned.id,vehicleId:returned.vehicleId,driverId:returned.driverId,returned,status:'incomplete',distance:null,reason:'Retorno sem uma saída vinculada e válida.'});
+  return trips.sort((a,b)=>(b.returned?.finishedAt||b.departure?.finishedAt||'').localeCompare(a.returned?.finishedAt||a.departure?.finishedAt||''));
+}
+export function getActiveDeparture(vehicleId:string,inspections:Inspection[]){return buildTrips(inspections.filter(i=>i.vehicleId===vehicleId)).find(t=>t.status==='active')?.departure;}
+export function latestOdometer(vehicle:Vehicle,inspections:Inspection[]){const latest=inspections.filter(i=>i.vehicleId===vehicle.id).sort((a,b)=>b.finishedAt.localeCompare(a.finishedAt))[0];return Math.max(vehicle.odometer,latest?.odometer??0);}
+export function localDay(value:string){const p=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date(value));const part=(type:string)=>p.find(x=>x.type===type)?.value||'';return part('year')+'-'+part('month')+'-'+part('day');}
+export function filterTrips(trips:VehicleTrip[],filters:{vehicleId?:string;driverId?:string;from?:string;to?:string;search?:string},data:FleetData){return trips.filter(t=>{if(filters.vehicleId&&t.vehicleId!==filters.vehicleId||filters.driverId&&t.driverId!==filters.driverId)return false;const day=localDay(t.returned?.finishedAt||t.departure!.finishedAt);if(filters.from&&day<filters.from||filters.to&&day>filters.to)return false;const v=data.vehicles.find(v=>v.id===t.vehicleId),d=data.drivers.find(d=>d.id===t.driverId);return !filters.search||[v?.model,v?.plate,d?.name,t.departure?.destination,t.returned?.destination].join(' ').toLocaleLowerCase('pt-BR').includes(filters.search.toLocaleLowerCase('pt-BR'));});}
+export function tripTotals(trips:VehicleTrip[]){return {distance:trips.filter(t=>t.status==='completed').reduce((sum,t)=>sum+(t.distance??0),0),completed:trips.filter(t=>t.status==='completed').length,active:trips.filter(t=>t.status==='active').length,incomplete:trips.filter(t=>t.status==='incomplete').length};}
+export function priorFindings(trip:VehicleTrip,inspections:Inspection[]){if(!trip.departure)return [];const at=trip.departure.finishedAt;return inspections.filter(i=>i.vehicleId===trip.vehicleId&&i.finishedAt<=at).flatMap(inspection=>inspection.findings.filter(f=>{const events=(f.events||[]).filter(e=>e.createdAt<=at),last=events[events.length-1];if(last)return last.status!=='closed';if(f.events?.length)return true;return !f.resolved||!!f.resolution&&f.resolution.resolvedAt>at;}).map(finding=>({inspection,finding})));}

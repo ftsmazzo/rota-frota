@@ -1,0 +1,9 @@
+"use client";
+import {useRef,useEffect,useState} from "react";
+import {RotateCcw,PenLine} from "lucide-react";
+export function Signature({label,value,onChange}:{label:string;value?:string;onChange:(value:string)=>void}){
+ const canvas=useRef<HTMLCanvasElement>(null);const drawing=useRef(false);const [dirty,setDirty]=useState(false);
+ useEffect(()=>{const el=canvas.current;if(!el)return;const r=el.getBoundingClientRect();el.width=Math.round(r.width*2);el.height=240;const c=el.getContext("2d")!;c.scale(2,2);c.lineWidth=2;c.lineCap="round";c.strokeStyle="#173d32";if(value){const image=new Image();image.onload=()=>c.drawImage(image,0,0,r.width,120);image.src=value;}},[]);
+ const point=(e:React.PointerEvent<HTMLCanvasElement>)=>{const rect=e.currentTarget.getBoundingClientRect();return [e.clientX-rect.left,e.clientY-rect.top]};
+ return <div className="signature-block"><div className="signature-label"><span><PenLine size={15}/>{label}</span><button type="button" className="text-button" onClick={()=>{const el=canvas.current!;el.getContext("2d")!.clearRect(0,0,el.width,el.height);setDirty(false);onChange("")}}><RotateCcw size={12}/> Limpar</button></div><div className="signature-surface"><canvas ref={canvas} aria-label={"Assinatura de "+label} onPointerDown={e=>{e.currentTarget.setPointerCapture(e.pointerId);drawing.current=true;const [x,y]=point(e);const c=e.currentTarget.getContext("2d")!;c.beginPath();c.moveTo(x,y);c.lineTo(x+.5,y+.5);c.stroke();setDirty(true)}} onPointerMove={e=>{if(!drawing.current)return;const [x,y]=point(e);const c=e.currentTarget.getContext("2d")!;c.lineTo(x,y);c.stroke()}} onPointerUp={e=>{drawing.current=false;onChange(e.currentTarget.toDataURL("image/png"))}} onPointerCancel={()=>{drawing.current=false}}/>{!dirty&&!value&&<span>Assine com o dedo ou o mouse</span>}</div></div>
+}

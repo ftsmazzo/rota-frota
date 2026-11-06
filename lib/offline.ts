@@ -1,0 +1,17 @@
+import type {FleetData,Inspection,Draft} from "./model";
+export type LocalState={data:FleetData;draft?:Draft;lastSync?:string};
+let connection:Promise<IDBDatabase>|undefined;
+let userScope="default";
+const pendingWrites=new Set<Promise<void>>();
+export async function configureOffline(userId:string){if(userScope===userId)return;if(connection){const db=await connection;db.close();connection=undefined;}userScope=userId;}
+function open(){return connection??=new Promise((resolve,reject)=>{const request=indexedDB.open("rota-fleet-"+userScope,1);request.onupgradeneeded=()=>request.result.createObjectStore("state");request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error)});}
+export async function loadLocal():Promise<LocalState|undefined>{const db=await open();return new Promise((resolve,reject)=>{const request=db.transaction("state","readonly").objectStore("state").get("main");request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error)});}
+export function saveLocal(state:LocalState){const write=(async()=>{const db=await open();return new Promise<void>((resolve,reject)=>{const transaction=db.transaction("state","readwrite");transaction.objectStore("state").put(state,"main");transaction.oncomplete=()=>resolve();transaction.onerror=()=>reject(transaction.error);transaction.onabort=()=>reject(transaction.error||new Error("Armazenamento interrompido."))});})();pendingWrites.add(write);write.then(()=>pendingWrites.delete(write),()=>pendingWrites.delete(write));return write;}
+export async function flushLocalWrites(){while(pendingWrites.size)await Promise.all([...pendingWrites]);}
+export async function syncInspection(inspection:Inspection):Promise<Inspection>{
+ const photos=[];
+ for(const photo of inspection.photos){if(photo.url?.startsWith("/api/media/")){photos.push(photo);continue;}if(!photo.data)throw new Error("Uma foto não está disponível para envio.");const file=await (await fetch(photo.data)).blob();const form=new FormData();form.set("file",file,photo.id+".jpg");form.set("id",photo.id);const upload=await fetch("/api/media",{method:"POST",body:form});const result=await upload.json() as any;if(!upload.ok)throw new Error(result.error||"Falha ao enviar foto.");photos.push({id:photo.id,label:photo.label,url:result.url,takenAt:photo.takenAt});}
+ const {pending,syncError,audio,...rest}=inspection;void pending;void syncError;void audio;
+ const response=await fetch("/api/inspections",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...rest,photos})});const result=await response.json() as any;if(!response.ok)throw new Error(result.error||"Falha ao enviar vistoria.");return {...result.inspection,photos:result.inspection.photos.map((p:Inspection["photos"][number])=>({...p,data:inspection.photos.find(local=>local.id===p.id)?.data}))};
+}
+export async function readPhoto(file:File){if(!file.type.startsWith("image/"))throw new Error("Escolha uma imagem válida.");if(file.size>20000000)throw new Error("Escolha uma imagem de até 20 MB.");const bitmap=await createImageBitmap(file);const scale=Math.min(1,1800/Math.max(bitmap.width,bitmap.height));const canvas=document.createElement("canvas");canvas.width=Math.round(bitmap.width*scale);canvas.height=Math.round(bitmap.height*scale);canvas.getContext("2d")!.drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();return canvas.toDataURL("image/jpeg",0.86);}

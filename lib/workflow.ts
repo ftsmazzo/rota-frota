@@ -1,0 +1,5 @@
+import type {Finding,FindingStatus} from './model';
+export const FINDING_STATUS_LABELS:Record<FindingStatus,string>={identified:'Identificada',assessment:'Em avaliação',referred:'Encaminhada para reparo',repairing:'Em reparo',repaired:'Aguardando conferência final',closed:'Concluída'};
+export const FINDING_TRANSITIONS:Record<FindingStatus,FindingStatus[]>={identified:['assessment','referred','repairing','repaired'],assessment:['referred','repairing','repaired'],referred:['repairing','repaired'],repairing:['repaired'],repaired:['repairing','closed'],closed:['assessment','referred']};
+export function findingStatus(finding:Finding):FindingStatus{return finding.status||(finding.resolved?'closed':'identified');}
+export function findingBlock(finding:Finding):'attention'|'maintenance'|null{const status=findingStatus(finding);if(status==='closed')return null;if(status==='referred'||status==='repairing')return 'maintenance';if(status==='assessment'||status==='repaired'||finding.severity==='high')return 'attention';return null;}

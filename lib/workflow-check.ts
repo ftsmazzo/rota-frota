@@ -1,0 +1,91 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import {createHash,randomUUID} from 'node:crypto';
+import {db,readData,canonical} from './server';
+import {mediaDirectory,mediaPath,dataDirectory} from './storage';
+import {APP_RELEASE} from './release';
+import {recordInspection} from './inspection-service';
+import {recordFindingEvent} from './finding-service';
+import {confirmTripLink} from './trip-service';
+import {inspectionSchema} from './inspection-schema';
+import {BusinessError} from './business-error';
+import {CHECKLIST,PHOTO_LABELS,getVehicleState,type Inspection,type Vehicle,type FindingStatus} from './model';
+import {buildTrips,tripTotals,filterTrips,priorFindings} from './trips';
+
+// Fixtures live inside one rolled-back transaction and never enter the fleet history.
+export async function verifyWorkflowDeployment(){
+ const marker=path.join(dataDirectory,'workflow-check.json');
+ const previous=await fs.readFile(marker,'utf8').then(JSON.parse).catch(()=>null);
+ if(previous?.release===APP_RELEASE&&previous.ok)return;
+ const client=await db().connect(),files:string[]=[],checks:Record<string,boolean>={};
+ const assert=(name:string,value:unknown)=>{if(!value)throw Error('workflow_check:'+name);checks[name]=true;};
+ const rejects=async(name:string,run:()=>Promise<unknown>)=>{try{await run();}catch(error){if(error instanceof BusinessError){checks[name]=true;return;}throw error;}throw Error('workflow_check:'+name);};
+ const actor={id:randomUUID(),name:'Verificação de implantação'},driverId=randomUUID(),vehicleId=randomUUID(),legacyVehicleId=randomUUID(),historyVehicleId=randomUUID();
+ const image='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',bytes=Buffer.from(image,'base64');
+ const at=(minutes:number)=>new Date(Date.now()-minutes*60000).toISOString();
+ const vehicle=(id:string):Vehicle=>({id,model:'Verificação temporária',plate:'CHECK-'+id,year:'2026',color:'Branco',odometer:1000,unit:'Teste transacional',state:'available',maintenanceAt:10000,illustration:'sedan'});
+ try{
+  await client.query('BEGIN');
+  await client.query("INSERT INTO app_users(id,email,full_name,password_hash,role,active) VALUES($1,$2,$3,'disabled','admin',false)",[actor.id,actor.id+'@check.invalid',actor.name]);
+  await client.query("INSERT INTO fleet_records(id,kind,payload) VALUES($1,'driver',$2)",[driverId,JSON.stringify({id:driverId,name:'Motorista temporário',role:'Teste',initials:'VT',color:'#eee'})]);
+  for(const id of [vehicleId,legacyVehicleId,historyVehicleId])await client.query("INSERT INTO fleet_records(id,kind,payload) VALUES($1,'vehicle',$2)",[id,JSON.stringify(vehicle(id))]);
+  await fs.mkdir(mediaDirectory,{recursive:true});
+  const photos:Inspection['photos']=[];
+  for(const label of PHOTO_LABELS){const id=randomUUID(),file=mediaPath(id);await fs.writeFile(file,bytes,{flag:'wx',mode:0o600});files.push(file);await client.query('INSERT INTO uploaded_media(id,mime_type,byte_size,sha256,uploaded_by) VALUES($1,\'image/png\',$2,$3,$4)',[id,bytes.length,createHash('sha256').update(bytes).digest('hex'),actor.id]);photos.push({id,label,url:'/api/media/'+id,takenAt:at(250)});}
+  const make=(kind:Inspection['kind'],minutes:number,odometer:number,extra:Partial<Inspection>={}):Inspection=>inspectionSchema.parse({id:randomUUID(),vehicleId,driverId,kind,startedAt:at(minutes+1),finishedAt:at(minutes),odometer,fuel:3,destination:'Verificação transacional',answers:Object.fromEntries(CHECKLIST.map(x=>[x.id,'ok'])),findings:[],notes:'Fixture temporária',photos,driverSignature:'data:image/png;base64,'+image,inspectorSignature:'data:image/png;base64,'+image,inspectorName:actor.name,confirmed:true,...extra});
+  const departure=make('departure',240,1000);
+  await rejects('return_requires_departure',()=>recordInspection(client,make('return',245,1000),actor.id));
+  await recordInspection(client,departure,actor.id);
+  assert('departure_idempotent',(await recordInspection(client,departure,actor.id)).existing);
+  await rejects('one_active_departure',()=>recordInspection(client,make('departure',230,1000),actor.id));
+  await rejects('return_must_match',()=>recordInspection(client,make('return',220,1040,{previousId:randomUUID()}),actor.id));
+  await rejects('odometer_never_decreases',()=>recordInspection(client,make('return',220,999,{previousId:departure.id}),actor.id));
+  const findingId=randomUUID(),returned=make('return',220,1040,{previousId:departure.id,answers:{...departure.answers,tires:'issue'},findings:[{id:findingId,area:'Pneu',description:'Avaria de teste transacional',severity:'high',x:25,y:30}]});
+  await recordInspection(client,returned,actor.id);
+  let data=await readData(client),trip=buildTrips(data.inspections).find(t=>t.id===departure.id)!;
+  assert('paired_distance',trip.status==='completed'&&trip.distance===40);
+  assert('catalog_odometer',data.vehicles.find(v=>v.id===vehicleId)?.odometer===1040);
+  assert('high_finding_blocks',getVehicleState(vehicle(vehicleId),data.inspections)==='attention');
+  assert('period_vehicle_driver_totals',tripTotals(filterTrips(buildTrips(data.inspections),{vehicleId,driverId},data)).distance===40);
+  await rejects('cannot_close_without_repair',()=>recordFindingEvent(client,{id:randomUUID(),inspectionId:returned.id,findingId,status:'closed',note:'Conclusão indevida de teste',expectedEventId:null,confirmed:true},actor.id));
+  let head:string|null=null;
+  const update=async(status:FindingStatus,confirmed=false)=>{const value={id:randomUUID(),inspectionId:returned.id,findingId,status,note:'Verificação da etapa '+status,expectedEventId:head,confirmed};const result=await recordFindingEvent(client,value,actor.id);head=result.events!.at(-1)!.id;return {value,result};};
+  const referred=await update('referred');data=await readData(client);
+  assert('referral_stays_open',!referred.result.resolved&&getVehicleState(vehicle(vehicleId),data.inspections)==='maintenance');
+  assert('event_idempotent',(await recordFindingEvent(client,referred.value,actor.id)).events?.length===1);
+  await rejects('stale_update_rejected',()=>recordFindingEvent(client,{...referred.value,id:randomUUID(),status:'repairing',expectedEventId:null},actor.id));
+  await rejects('repair_blocks_departure',()=>recordInspection(client,make('departure',210,1040),actor.id));
+  await update('repairing');await update('repaired');data=await readData(client);
+  assert('repaired_requires_final_review',getVehicleState(vehicle(vehicleId),data.inspections)==='attention');
+  await rejects('closure_requires_confirmation',()=>recordFindingEvent(client,{id:randomUUID(),inspectionId:returned.id,findingId,status:'closed',note:'Falta a confirmação final',expectedEventId:head},actor.id));
+  const closed=await update('closed',true);data=await readData(client);
+  assert('final_review_releases',closed.result.resolved&&closed.result.events?.length===4&&getVehicleState(vehicle(vehicleId),data.inspections)==='available');
+  await update('assessment');data=await readData(client);
+  assert('reopen_keeps_history',data.inspections.find(i=>i.id===returned.id)!.findings[0].events?.length===5&&getVehicleState(vehicle(vehicleId),data.inspections)==='attention');
+  const raw=(await client.query('SELECT payload FROM fleet_records WHERE id=$1',[returned.id])).rows[0].payload;
+  assert('original_inspection_immutable',canonical(inspectionSchema.parse(raw))===canonical(returned));
+  const old=make('return',300,1000,{vehicleId:legacyVehicleId,findings:[{id:findingId,area:'Pneu',description:'Ocorrência do fluxo anterior',severity:'high'}]});
+  await client.query("INSERT INTO fleet_records(id,kind,payload) VALUES($1,'inspection',$2)",[old.id,JSON.stringify(old)]);
+  const oldEvent=randomUUID();await client.query('INSERT INTO finding_resolutions(id,inspection_id,finding_id,note,resolved_by) VALUES($1,$2,$3,$4,$5)',[oldEvent,old.id,findingId,'Encaminhado pelo fluxo anterior. Preservar observação.',actor.id]);
+  const reopened=await recordFindingEvent(client,{id:randomUUID(),inspectionId:old.id,findingId,status:'referred',note:'Reabertura para acompanhar reparo',expectedEventId:oldEvent},actor.id);
+  assert('legacy_notes_preserved',reopened.events?.length===2&&reopened.events[0].legacy&&reopened.events[0].note==='Encaminhado pelo fluxo anterior. Preservar observação.');
+  const historicalDeparture=make('departure',400,1000,{vehicleId:historyVehicleId}),historicalReturn=make('return',350,1070,{vehicleId:historyVehicleId});
+  for(const i of [historicalDeparture,historicalReturn])await client.query("INSERT INTO fleet_records(id,kind,payload) VALUES($1,'inspection',$2)",[i.id,JSON.stringify(i)]);
+  data=await readData(client);assert('unlinked_excluded_from_totals',tripTotals(buildTrips(data.inspections.filter(i=>i.vehicleId===historyVehicleId))).distance===0);
+  await confirmTripLink(client,{departureId:historicalDeparture.id,returnId:historicalReturn.id,note:'Conferência transacional do vínculo histórico'},actor);
+  data=await readData(client);assert('historical_link_distance',tripTotals(buildTrips(data.inspections.filter(i=>i.vehicleId===historyVehicleId))).distance===70);
+  assert('historical_source_immutable',!(await client.query('SELECT payload FROM fleet_records WHERE id=$1',[historicalReturn.id])).rows[0].payload.previousId);
+  const laterReturn=make('return',320,1080,{vehicleId:historyVehicleId});await client.query("INSERT INTO fleet_records(id,kind,payload) VALUES($1,'inspection',$2)",[laterReturn.id,JSON.stringify(laterReturn)]);
+  await rejects('no_second_return_for_departure',()=>confirmTripLink(client,{departureId:historicalDeparture.id,returnId:laterReturn.id,note:'Tentativa de vínculo duplicado'},actor));
+  const withHistory={...returned,findings:[{...returned.findings[0],events:[{id:randomUUID(),status:'closed' as const,note:'Concluída antes da saída',actor:actor.name,createdAt:at(210)},{id:randomUUID(),status:'assessment' as const,note:'Reaberta depois da saída',actor:actor.name,createdAt:at(190)}]}]};
+  assert('historical_finding_snapshot',priorFindings({...trip,departure:{...departure,finishedAt:at(200)}},[withHistory]).length===0);
+  await client.query('ROLLBACK');
+  assert('fixtures_removed',!(await client.query('SELECT id FROM app_users WHERE id=$1',[actor.id])).rowCount);
+  await fs.writeFile(marker,JSON.stringify({release:APP_RELEASE,ok:true,checks,at:new Date().toISOString()}),{mode:0o600});
+  console.info(JSON.stringify({event:'workflow_check_completed',release:APP_RELEASE,ok:true,checks}));
+ }catch(error){
+  await client.query('ROLLBACK').catch(()=>{});
+  console.error(JSON.stringify({event:'workflow_check_failed',release:APP_RELEASE,check:error instanceof Error&&error.message.startsWith('workflow_check:')?error.message:'database_or_storage_check'}));
+  throw Error('A verificação do fluxo de utilizações falhou. Consulte workflow_check_failed.');
+ }finally{client.release();for(const file of files)await fs.unlink(file).catch(()=>{});}
+}
