@@ -7,8 +7,12 @@ import {recordRefueling,voidRefueling} from './refueling-service';
 import {recordInspection} from './inspection-service';
 import {readData,canonical} from './server';
 import {BusinessError} from './business-error';
+import {normalizePlate,validPlate} from './inspection-intake';
+import {pointDistanceKm,analyzeTripCoherence} from './trip-coherence';
 type Assert=(name:string,value:unknown)=>void;
 export function checkEvolutionMath(assert:Assert){
+ assert('plate_normalized',normalizePlate('abc-1d23')==='ABC1D23'&&validPlate('ABC-1D23'));
+ assert('gps_distance_stable',pointDistanceKm({lat:-23.5505,lng:-46.6333},{lat:-23.5505,lng:-46.6333})===0);
  const make=(n:number,odometer:number,liters:number,fullTank:boolean,extra:Partial<Refueling>={}):Refueling=>({id:'math-'+n,vehicleId:'math',driverId:'driver',occurredAt:new Date(Date.UTC(2026,0,n+1,15)).toISOString(),odometer,station:'Posto Exemplo',fuelType:'gasoline',liters,unitPrice:6,totalPaid:liters*6,discount:0,fullTank,gapBefore:false,notes:'',photos:[],...extra});
  const baseline=make(0,1000,30,true),partial=make(1,1100,10,false),end=make(2,1400,30,true),list=[baseline,partial,end];
  assert('fuel_full_tank_baseline_excluded',fuelCycles([baseline]).length===0);
@@ -31,6 +35,8 @@ export function checkEvolutionMath(assert:Assert){
  const proposal:InspectionProposal={odometer:{value:1000,quote:'inventado'},fuel:{value:null,quote:''},destination:{value:null,quote:''},answers:[{itemId:'lights',answer:'ok',quote:'iluminação conferida'},{itemId:'tires',answer:'ok',quote:'não foi dito'}],findings:[],warnings:[]};
  const grounded=groundedProposal(proposal,'Iluminação conferida.');assert('voice_only_cited_fields',grounded.odometer.value===null&&grounded.answers.length===1&&grounded.answers[0].itemId==='lights');
  assert('voice_conflict_not_silently_overwritten',groundedProposal({...proposal,answers:[{itemId:'lights',answer:'ok',quote:'iluminação conferida'},{itemId:'lights',answer:'issue',quote:'iluminação conferida'}]},'Iluminação conferida.').answers.length===0);
+ const tripOut={id:'out',vehicleId:'v',driverId:'d',kind:'departure' as const,startedAt:'2026-01-01T10:00:00Z',finishedAt:'2026-01-01T10:01:00Z',odometer:100,fuel:4,destination:'A',answers:{},findings:[],notes:'',photos:[],inspectorName:'Teste',confirmed:true,intake:{version:1 as const,platePhotoId:'p',dashboardPhotoId:'d',observedPlate:'ABC1D23',plateMethod:'manual' as const,plateConfirmedAt:'2026-01-01T10:00:00Z',checkIn:{status:'captured' as const,capturedAt:'2026-01-01T10:00:00Z',lat:-23.55,lng:-46.63,accuracy:10}}},tripBack={...tripOut,id:'back',kind:'return' as const,previousId:'out',finishedAt:'2026-01-01T12:01:00Z',odometer:120,intake:{...tripOut.intake,checkIn:{status:'captured' as const,capturedAt:'2026-01-01T12:00:00Z',lat:-23.55,lng:-46.63,accuracy:10}}};
+ assert('trip_coherence_explains_no_tracking',analyzeTripCoherence({id:'out',vehicleId:'v',driverId:'d',departure:tripOut,returned:tripBack,status:'completed',distance:20}).disclaimer.includes('não representa rastreamento'));
 }
 export async function checkEvolutionDatabase(client:pg.PoolClient,context:{actorId:string;driverId:string;vehicle:Vehicle;inspection:Inspection;assert:Assert}){
  const {actorId,driverId,assert}=context;checkEvolutionMath(assert);
@@ -53,9 +59,10 @@ export async function checkEvolutionDatabase(client:pg.PoolClient,context:{actor
  assert('refueling_void_recalculates_odometer',data.vehicles.find(v=>v.id===id)!.odometer===1100);
  assert('refueling_void_audited',!!data.refuelings!.find(r=>r.id===ending.id)!.voided);
  await rejects('refueling_no_double_void',()=>voidRefueling(client,ending.id,'Anulação repetida de teste.',actorId));
- const evidenceVehicle=randomUUID();await client.query("INSERT INTO fleet_records(id,kind,payload) VALUES($1,'vehicle',$2)",[evidenceVehicle,JSON.stringify({...v,id:evidenceVehicle,plate:'CHECK-'+evidenceVehicle})]);
- const i:Inspection={...context.inspection,id:randomUUID(),vehicleId:evidenceVehicle,driverId,kind:'departure',startedAt:at(601),finishedAt:at(600),previousId:undefined,odometer:1000,evidenceVersion:2,findings:[{id:randomUUID(),area:'Porta',description:'Risco de teste com evidência individual',severity:'low',evidence:{overviewPhotoId:context.inspection.photos[0].id,detailPhotoIds:[context.inspection.photos[5].id],x:35,y:45}}]};
+ const evidenceVehicle=randomUUID();await client.query("INSERT INTO fleet_records(id,kind,payload) VALUES($1,'vehicle',$2)",[evidenceVehicle,JSON.stringify({...v,id:evidenceVehicle,plate:'TST1A23'})]);
+ const detail=context.inspection.photos.find(p=>p.label==='Detalhe da avaria')!,overview=context.inspection.photos.find(p=>p.label==='Frente')!;
+ const i:Inspection={...context.inspection,id:randomUUID(),vehicleId:evidenceVehicle,driverId,kind:'departure',startedAt:at(601),finishedAt:at(600),previousId:undefined,odometer:1000,evidenceVersion:2,findings:[{id:randomUUID(),area:'Porta',description:'Risco de teste com evidência individual',severity:'low',evidence:{overviewPhotoId:overview.id,detailPhotoIds:[detail.id],x:35,y:45}}]};
  await rejects('new_inspection_requires_evidence_version',()=>recordInspection(client,{...i,id:randomUUID(),evidenceVersion:undefined,startedAt:'2026-11-08T04:00:00.000Z',finishedAt:'2026-11-08T04:01:00.000Z'},actorId));
- await recordInspection(client,i,actorId);assert('evidence_individual_persisted',(await readData(client)).inspections.find(v=>v.id===i.id)!.findings[0].evidence?.detailPhotoIds[0]===i.photos[5].id);
+ await recordInspection(client,i,actorId);assert('evidence_individual_persisted',(await readData(client)).inspections.find(v=>v.id===i.id)!.findings[0].evidence?.detailPhotoIds[0]===detail.id);
  await rejects('evidence_server_requires_each_detail',()=>recordInspection(client,{...i,id:randomUUID(),findings:[{...i.findings[0],evidence:undefined}]},actorId));
 }

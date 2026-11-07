@@ -1,22 +1,25 @@
 "use client";
 import {useState} from 'react';
-import {Download,FileText,LoaderCircle,Route,X} from 'lucide-react';
+import {AlertTriangle,Download,FileText,LoaderCircle,MapPin,Route,X} from 'lucide-react';
 import {CHECKLIST,REQUIRED_PHOTOS,km,dateTime,fuelLabel,type FleetData,type Inspection,type Finding,type Photo} from '../lib/model';
 import {buildTrips,isTripPair,priorFindings,type VehicleTrip} from '../lib/trips';
 import {FINDING_STATUS_LABELS,findingStatus} from '../lib/workflow';
 import {DamageEvidence} from './damage-evidence';
 import {Field} from './common';
 import {PhotoView} from './report';
+import {analyzeTripCoherence} from '../lib/trip-coherence';
+import {PLATE_PHOTO_LABEL} from '../lib/inspection-intake';
 export type ConfirmedTripLink={departureId:string;returnId:string;note:string;at:string;actor:string;originalPreviousId?:string};
 const answerLabel=(value?:string)=>value==='ok'?'Conforme':value==='issue'?'Atenção':value==='na'?'Não se aplica':'Sem registro';
 export function tripPhoto(inspection:Inspection|undefined,label:string){return inspection?.photos.find(p=>p.label===label||(label==='Lateral direita'&&p.label==='Lateral 1')||(label==='Lateral esquerda'&&p.label==='Lateral 2'));}
 export function TripDetail({trip,data,admin,online,onClose,onInspection,onFinding,onLinked}:{trip:VehicleTrip;data:FleetData;admin:boolean;online:boolean;onClose:()=>void;onInspection:(i:Inspection)=>void;onFinding:(i:Inspection,f:Finding)=>void;onLinked:(link:ConfirmedTripLink)=>Promise<void>}){
- const [busy,setBusy]=useState(false),[error,setError]=useState('');const vehicle=data.vehicles.find(v=>v.id===trip.vehicleId)!,departure=trip.departure,returned=trip.returned;
- const before=priorFindings(trip,data.inspections),labels=[...REQUIRED_PHOTOS,...(tripPhoto(departure,'Detalhe da avaria')||tripPhoto(returned,'Detalhe da avaria')?['Detalhe da avaria']:[])];
+ const [busy,setBusy]=useState(false),[error,setError]=useState('');const vehicle=data.vehicles.find(v=>v.id===trip.vehicleId)!,departure=trip.departure,returned=trip.returned,coherence=analyzeTripCoherence(trip);
+ const before=priorFindings(trip,data.inspections),labels=[...(departure?.intake||returned?.intake?[PLATE_PHOTO_LABEL]:[]),...REQUIRED_PHOTOS,...(tripPhoto(departure,'Detalhe da avaria')||tripPhoto(returned,'Detalhe da avaria')?['Detalhe da avaria']:[])];
  const showPhoto=(i:Inspection|undefined,label:string)=>{const photo=tripPhoto(i,label);return photo&&(online||photo.data||photo.demoSlot!==undefined)?<PhotoView photo={photo}/>:<div className="comparison-photo-missing">{photo?'Foto disponível com conexão':'Sem foto neste registro'}</div>;};
  return <div className="report-overlay trip-overlay" role="dialog" aria-modal="true" aria-label="Utilização do veículo"><header className="report-toolbar"><div><Route size={22}/><div><strong>Utilização do veículo</strong><small>{vehicle.model} · {vehicle.plate}</small></div></div><div><button className="button primary" disabled={busy} onClick={async()=>{setBusy(true);setError('');try{const {downloadTripReport}=await import('../lib/trip-pdf');await downloadTripReport(trip,data);}catch{setError('Não foi possível gerar o PDF completo. Conecte-se para carregar as fotos e tente novamente.');}finally{setBusy(false);}}}>{busy?<LoaderCircle className="spin" size={15}/>:<Download size={15}/>} PDF completo</button><button className="icon-button" aria-label="Fechar utilização" onClick={onClose}><X size={21}/></button></div></header>
   <div className="report-scroll trip-detail-scroll"><article className="trip-sheet"><span className="eyebrow">HISTÓRICO DO VEÍCULO</span><h1>{vehicle.model} <span className="plate">{vehicle.plate}</span></h1><p>{departure?.destination||returned?.destination}</p>
    <div className="trip-summary"><div><small>Situação da utilização</small><strong>{trip.status==='completed'?'Encerrada':trip.status==='active'?'Em uso':'Vínculo incompleto'}</strong></div><div><small>Quilômetros registrados</small><strong>{trip.distance!==null?km(trip.distance):'Aguardando vínculo / retorno'}</strong></div></div>
+   {trip.status==='completed'&&<section className={'coherence-card '+(coherence.status==='review_recommended'?'review':'')}><div className="section-heading"><div><span className="eyebrow">COERÊNCIA DA UTILIZAÇÃO</span><h3>{coherence.status==='review_recommended'?'Há dados para conferir':'Nenhum alerta automático relevante'}</h3></div>{coherence.status==='review_recommended'?<AlertTriangle size={21}/>:<MapPin size={21}/>}</div>{coherence.signals.map((signal,index)=><p key={index} className={signal.level==='review'?'fuel-error':''}>{signal.message}</p>)}<small>{coherence.disclaimer}</small></section>}
    <p className="helper">Encerrar a utilização registra o retorno. Ocorrências de avaliação e reparo continuam acompanhadas separadamente até a conferência final.</p>
    {(departure?.demo||returned?.demo)&&<div className="demo-banner">Dados demonstrativos. Fotos ilustrativas nos registros identificados como demonstração.</div>}
    {error&&<div className="error-banner">{error}</div>}

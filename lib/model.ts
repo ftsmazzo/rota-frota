@@ -1,6 +1,7 @@
 export type Answer = "ok" | "issue" | "na";
 import {getActiveDeparture} from './trips';
 import {findingBlock,findingStatus} from './workflow';
+import type {DraftIntake,InspectionIntake} from './inspection-intake';
 export type Vehicle = { id:string; model:string; plate:string; year:string; color:string; odometer:number; unit:string; state:"available"|"out"|"attention"|"maintenance"; driver?:string; destination?:string; maintenanceAt:number; illustration:string };
 export type Driver = { id:string; name:string; role:string; initials:string; color:string };
 export type FindingResolution = {note:string;resolvedAt:string;resolvedBy:string};
@@ -8,11 +9,11 @@ export type FindingStatus='identified'|'assessment'|'referred'|'repairing'|'repa
 export type FindingEvent={id:string;status:FindingStatus;note:string;createdAt:string;actor:string;legacy?:boolean};
 export type Finding = { id:string; area:string; description:string; severity:"low"|"medium"|"high"; x?:number; y?:number; evidence?:{overviewPhotoId:string;detailPhotoIds:string[];x?:number;y?:number}; resolved?:boolean; resolution?:FindingResolution; status?:FindingStatus; events?:FindingEvent[] };
 export type Photo = { id:string; label:string; data?:string; url?:string; demoSlot?:number; takenAt:string };
-export type Inspection = { id:string; vehicleId:string; driverId:string; kind:"departure"|"return"; startedAt:string; finishedAt:string; odometer:number; fuel:number; destination:string; answers:Record<string,Answer>; findings:Finding[]; notes:string; photos:Photo[]; driverSignature?:string; inspectorSignature?:string; inspectorName:string; confirmed:boolean; evidenceVersion?:2; voiceTranscripts?:VoiceTranscript[]; previousId?:string; linkNote?:{note:string;at:string;actor:string;originalPreviousId?:string}; demo?:boolean; pending?:boolean; syncError?:string; receivedAt?:string; audio?:string; location?:{lat:number;lng:number;accuracy:number} };
+export type Inspection = { id:string; vehicleId:string; driverId:string; kind:"departure"|"return"; startedAt:string; finishedAt:string; odometer:number; fuel:number; destination:string; answers:Record<string,Answer>; findings:Finding[]; notes:string; photos:Photo[]; driverSignature?:string; inspectorSignature?:string; inspectorName:string; confirmed:boolean; evidenceVersion?:2; intake?:InspectionIntake; voiceTranscripts?:VoiceTranscript[]; previousId?:string; linkNote?:{note:string;at:string;actor:string;originalPreviousId?:string}; demo?:boolean; pending?:boolean; syncError?:string; receivedAt?:string; audio?:string; location?:{lat:number;lng:number;accuracy:number} };
 export type VoiceClip={id:string;mimeType:string;createdAt:string;duration:number;transcript?:string;processedAt?:string};
 export type VoiceTranscript={id:string;text:string;createdAt:string};
 export type FleetData = {vehicles:Vehicle[]; drivers:Driver[]; inspections:Inspection[];refuelings?:import('./fuel').Refueling[]};
-export type Draft = Omit<Inspection,"finishedAt"|"confirmed"> & {step:number; updatedAt:string; findingDraft?:Partial<Finding>;voiceClips?:VoiceClip[]};
+export type Draft = Omit<Inspection,"finishedAt"|"confirmed"|"intake"> & {intake?:DraftIntake;step:number; updatedAt:string; findingDraft?:Partial<Finding>;voiceClips?:VoiceClip[]};
 export const CHECKLIST = [
  {id:"lights",group:"Segurança",label:"Faróis, lanternas e setas",hint:"Confira o funcionamento da iluminação."},
  {id:"tires",group:"Segurança",label:"Pneus e estepe",hint:"Observe desgaste, cortes e pressão aparente."},

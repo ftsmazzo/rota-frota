@@ -37,6 +37,10 @@ As credenciais de entrega ficam em arquivo separado. Nenhuma chave, senha, sess�
 - Administrador e operador; gestão de acessos; troca obrigatória da senha inicial.
 - IA para organizar observações, ler hodômetro em foto e transcrever áudio, sempre sujeita à conferência do operador.
 - Vistoria por voz com preenchimento assistido: somente informações apoiadas por trechos da transcrição são propostas; conflitos, ambiguidades e itens não mencionados permanecem para conferência.
+- A admissão da vistoria começa com foto da placa, foto do painel e check-in GPS pontual. A placa pode ser lida por IA e precisa corresponder ao veículo selecionado; hodômetro e combustível continuam sujeitos à confirmação humana.
+- O GPS registra somente um ponto, horário e precisão em cada saída ou retorno. Se estiver indisponível, o operador precisa justificar. O aplicativo não rastreia o trajeto em segundo plano.
+- O cadastro administrativo de veículo pode ser preenchido por foto do CRLV após confirmação explícita de autorização para envio ao provedor de IA. A IA extrai apenas placa, modelo, ano e cor; a imagem do documento não é armazenada pelo Rota e os campos permanecem editáveis.
+- A utilização apresenta sinais explicáveis de coerência entre saída e retorno, considerando hodômetro, duração e separação mínima entre check-ins. Alertas pedem conferência e não comprovam desvios ou atribuem responsabilidade.
 - Cada avaria pode vincular uma foto geral com marcação e uma ou duas fotos aproximadas. As evidências aparecem na vistoria, no comparativo e nos relatórios PDF.
 - Abastecimentos podem ser registrados por cupom, áudio ou formulário, com conferência de litros, preço, total e hodômetro. O painel calcula consumo somente entre ciclos válidos de tanque cheio e acumula abastecimentos parciais.
 - O histórico de abastecimento apresenta gasto, km/L, custo por quilômetro e preço médio ponderado por posto e combustível. Registros anulados, pendentes ou com lacunas declaradas não contaminam as médias.

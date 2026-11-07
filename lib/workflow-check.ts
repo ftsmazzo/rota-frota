@@ -1,4 +1,5 @@
 import {checkEvolutionDatabase} from './evolution-check';
+import {PLATE_PHOTO_LABEL} from './inspection-intake';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {createHash,randomUUID} from 'node:crypto';
@@ -24,7 +25,7 @@ export async function verifyWorkflowDeployment(){
  const actor={id:randomUUID(),name:'Verificação de implantação'},driverId=randomUUID(),vehicleId=randomUUID(),legacyVehicleId=randomUUID(),historyVehicleId=randomUUID();
  const image='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',bytes=Buffer.from(image,'base64');
  const at=(minutes:number)=>new Date(Date.now()-minutes*60000).toISOString();
- const vehicle=(id:string):Vehicle=>({id,model:'Verificação temporária',plate:'CHECK-'+id,year:'2026',color:'Branco',odometer:1000,unit:'Teste transacional',state:'available',maintenanceAt:10000,illustration:'sedan'});
+ const vehicle=(id:string):Vehicle=>({id,model:'Verificação temporária',plate:'TST1A23',year:'2026',color:'Branco',odometer:1000,unit:'Teste transacional',state:'available',maintenanceAt:10000,illustration:'sedan'});
  try{
   await client.query('BEGIN');
   await client.query("INSERT INTO app_users(id,email,full_name,password_hash,role,active) VALUES($1,$2,$3,'disabled','admin',false)",[actor.id,actor.id+'@check.invalid',actor.name]);
@@ -32,8 +33,8 @@ export async function verifyWorkflowDeployment(){
   for(const id of [vehicleId,legacyVehicleId,historyVehicleId])await client.query("INSERT INTO fleet_records(id,kind,payload) VALUES($1,'vehicle',$2)",[id,JSON.stringify(vehicle(id))]);
   await fs.mkdir(mediaDirectory,{recursive:true});
   const photos:Inspection['photos']=[];
-  for(const label of PHOTO_LABELS){const id=randomUUID(),file=mediaPath(id);await fs.writeFile(file,bytes,{flag:'wx',mode:0o600});files.push(file);await client.query('INSERT INTO uploaded_media(id,mime_type,byte_size,sha256,uploaded_by) VALUES($1,\'image/png\',$2,$3,$4)',[id,bytes.length,createHash('sha256').update(bytes).digest('hex'),actor.id]);photos.push({id,label,url:'/api/media/'+id,takenAt:at(250)});}
-  const make=(kind:Inspection['kind'],minutes:number,odometer:number,extra:Partial<Inspection>={}):Inspection=>inspectionSchema.parse({evidenceVersion:2,id:randomUUID(),vehicleId,driverId,kind,startedAt:at(minutes+1),finishedAt:at(minutes),odometer,fuel:3,destination:'Verificação transacional',answers:Object.fromEntries(CHECKLIST.map(x=>[x.id,'ok'])),findings:[],notes:'Fixture temporária',photos,driverSignature:'data:image/png;base64,'+image,inspectorSignature:'data:image/png;base64,'+image,inspectorName:actor.name,confirmed:true,...extra});
+  for(const label of [PLATE_PHOTO_LABEL,...PHOTO_LABELS]){const id=randomUUID(),file=mediaPath(id);await fs.writeFile(file,bytes,{flag:'wx',mode:0o600});files.push(file);await client.query('INSERT INTO uploaded_media(id,mime_type,byte_size,sha256,uploaded_by) VALUES($1,\'image/png\',$2,$3,$4)',[id,bytes.length,createHash('sha256').update(bytes).digest('hex'),actor.id]);photos.push({id,label,url:'/api/media/'+id,takenAt:at(250)});}
+  const make=(kind:Inspection['kind'],minutes:number,odometer:number,extra:Partial<Inspection>={}):Inspection=>inspectionSchema.parse({evidenceVersion:2,intake:{version:1,platePhotoId:photos[0].id,dashboardPhotoId:photos[5].id,observedPlate:'TST1A23',plateMethod:'manual',plateConfirmedAt:at(minutes+1),checkIn:{status:'captured',capturedAt:at(minutes+1),lat:-23.55,lng:-46.63,accuracy:10}},id:randomUUID(),vehicleId,driverId,kind,startedAt:at(minutes+1),finishedAt:at(minutes),odometer,fuel:3,destination:'Verificação transacional',answers:Object.fromEntries(CHECKLIST.map(x=>[x.id,'ok'])),findings:[],notes:'Fixture temporária',photos,driverSignature:'data:image/png;base64,'+image,inspectorSignature:'data:image/png;base64,'+image,inspectorName:actor.name,confirmed:true,...extra});
   const departure=make('departure',240,1000);
   await rejects('return_requires_departure',()=>recordInspection(client,make('return',245,1000),actor.id));
   await recordInspection(client,departure,actor.id);
@@ -41,7 +42,7 @@ export async function verifyWorkflowDeployment(){
   await rejects('one_active_departure',()=>recordInspection(client,make('departure',230,1000),actor.id));
   await rejects('return_must_match',()=>recordInspection(client,make('return',220,1040,{previousId:randomUUID()}),actor.id));
   await rejects('odometer_never_decreases',()=>recordInspection(client,make('return',220,999,{previousId:departure.id}),actor.id));
-  const findingId=randomUUID(),returned=make('return',220,1040,{previousId:departure.id,answers:{...departure.answers,tires:'issue'},findings:[{id:findingId,area:'Pneu',description:'Avaria de teste transacional',severity:'high',x:25,y:30,evidence:{overviewPhotoId:photos[1].id,detailPhotoIds:[photos[5].id],x:25,y:30}}]});
+  const findingId=randomUUID(),returned=make('return',220,1040,{previousId:departure.id,answers:{...departure.answers,tires:'issue'},findings:[{id:findingId,area:'Pneu',description:'Avaria de teste transacional',severity:'high',x:25,y:30,evidence:{overviewPhotoId:photos[1].id,detailPhotoIds:[photos[6].id],x:25,y:30}}]});
   await recordInspection(client,returned,actor.id);
   let data=await readData(client),trip=buildTrips(data.inspections).find(t=>t.id===departure.id)!;
   assert('paired_distance',trip.status==='completed'&&trip.distance===40);

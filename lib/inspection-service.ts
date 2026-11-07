@@ -5,7 +5,9 @@ import {getVehicleState,validateInspection,type Inspection} from './model';
 import {getActiveDeparture,latestOdometer} from './trips';
 import {mediaExists} from './storage';
 import {BusinessError} from './business-error';
+import {validateIntake} from './inspection-intake';
 const EVIDENCE_V2_ROLLOUT='2026-11-08T00:00:00-03:00';
+const INTAKE_ROLLOUT='2026-11-08T00:00:00-03:00';
 
 export async function recordInspection(client:pg.PoolClient,inspection:Inspection,actorId:string){
  await client.query('SELECT pg_advisory_xact_lock(hashtext($1))',[inspection.vehicleId]);
@@ -14,6 +16,7 @@ export async function recordInspection(client:pg.PoolClient,inspection:Inspectio
  if(inspection.evidenceVersion!==2&&Date.parse(inspection.startedAt)>=Date.parse(EVIDENCE_V2_ROLLOUT))throw new BusinessError('Atualize o aplicativo antes de enviar esta vistoria. As avarias novas exigem evidências individuais.',400);
  const data=await readData(client),vehicle=data.vehicles.find(v=>v.id===inspection.vehicleId);
  if(!vehicle||!data.drivers.some(d=>d.id===inspection.driverId))throw new BusinessError('Veículo ou motorista não encontrado.',400);
+ if(inspection.intake||Date.parse(inspection.startedAt)>=Date.parse(INTAKE_ROLLOUT)){const intakeErrors=validateIntake(inspection,vehicle);if(intakeErrors.length)throw new BusinessError(intakeErrors.join(' '),400);}
  const errors=validateInspection(inspection,data.inspections);if(errors.length)throw new BusinessError(errors.join(' '),400);
  const history=data.inspections.filter(i=>i.vehicleId===vehicle.id).sort((a,b)=>b.finishedAt.localeCompare(a.finishedAt)),active=getActiveDeparture(vehicle.id,data.inspections);
  if(inspection.finishedAt<inspection.startedAt||Date.parse(inspection.finishedAt)>Date.now()+600000)throw new BusinessError('Confira a data e a hora do aparelho antes de enviar.',400);

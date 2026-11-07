@@ -37,3 +37,14 @@
 .voice-import { margin-left: 8px; margin-top: 12px; cursor: pointer; }.voice-import input { display: none; }
 
 .voice-photo-prompt { margin-top:18px;padding:16px;background:#fff;border:1px solid #d9dfc8;border-radius:10px; }.voice-photo-prompt strong { font-size:12px; }.voice-photo-prompt p { font-size:11px;line-height:1.8;margin:10px 0; }
+.intake-card { margin: 24px 0; padding: 22px; border: 1px solid #dce6d0; border-radius: 16px; background: #f4f8ee; }
+.intake-card h3 { margin-top: 7px; }.intake-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; margin-top: 18px; }
+.intake-grid > article { min-width: 0; padding: 16px; border: 1px solid #dfe7d5; border-radius: 12px; background: white; }
+.intake-grid h4 { margin-bottom: 12px; }.intake-grid .photo-view { width: 100%; height: 130px; object-fit: contain; border-radius: 8px; background: #edf3e7; margin-bottom: 10px; }
+.intake-grid .button { width: 100%; justify-content: center; margin: 6px 0; white-space: normal; }.intake-grid .field { margin-top: 10px; }
+.document-reader { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 18px; margin-bottom: 20px; border-radius: 12px; background: #eef4e7; }
+.document-reader > div { flex: 1; }.document-reader input { display: none; }
+.coherence-card { margin: 20px 0; padding: 20px; border: 1px solid #dce6d0; border-radius: 14px; background: #f4f8ee; }.coherence-card.review { border-color: #ddcfa5; background: #fcf8eb; }
+.coherence-card p { font-size: 11px; line-height: 1.7; margin: 8px 0; }.coherence-card small { display: block; margin-top: 12px; color: #7f9072; line-height: 1.6; }
+.camera-label { position: relative; }.camera-input { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }.camera-label:focus-within { outline: 3px solid #8db06f; outline-offset: 2px; }
+@media(max-width:760px){.intake-grid { grid-template-columns: 1fr; }.document-reader { align-items: stretch; flex-direction: column; }.document-reader .button { width: 100%; justify-content: center; }}

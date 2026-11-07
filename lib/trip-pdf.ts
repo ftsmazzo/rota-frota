@@ -3,6 +3,8 @@ import {CHECKLIST,REQUIRED_PHOTOS,km,dateTime,fuelLabel,inspectionCode,type Flee
 import {priorFindings,type VehicleTrip} from './trips';
 import {findingStatus,FINDING_STATUS_LABELS} from './workflow';
 import {rasterize} from './pdf';
+import {analyzeTripCoherence} from './trip-coherence';
+import {PLATE_PHOTO_LABEL} from './inspection-intake';
 const photoAt=(i:Inspection|undefined,label:string)=>i?.photos.find(p=>p.label===label||(label==='Lateral direita'&&p.label==='Lateral 1')||(label==='Lateral esquerda'&&p.label==='Lateral 2'));
 export function buildTripReport(trip:VehicleTrip,data:FleetData,media:Record<string,string>={}){
  const pdf=new jsPDF({unit:'mm',format:'a4',compress:true}),vehicle=data.vehicles.find(v=>v.id===trip.vehicleId)!,code='UT-'+trip.id.replace(/[^a-z0-9]/gi,'').slice(-8).toUpperCase();let y=0;
@@ -21,7 +23,7 @@ export function buildTripReport(trip:VehicleTrip,data:FleetData,media:Record<str
  section('Checklist comparado');text('ITEM',17,y,6.5,true,muted);text('SAÍDA',111,y,6.5,true,muted);text('RETORNO',155,y,6.5,true,muted);y+=7;
  const answer=(value?:string)=>value==='ok'?'Conforme':value==='issue'?'Atenção':value==='na'?'Não se aplica':'Sem registro';
  for(const item of CHECKLIST){ensure(8);const a=trip.departure?.answers[item.id],b=trip.returned?.answers[item.id];if(a&&b&&a!==b){pdf.setFillColor(249,244,229);pdf.rect(16,y-4,178,7,'F');}text(item.label,17,y,8);text(answer(a),111,y,8);text(answer(b),155,y,8);pdf.setDrawColor(...line);pdf.line(16,y+3,194,y+3);y+=7.5;}
- const labels=[...REQUIRED_PHOTOS,...(photoAt(trip.departure,'Detalhe da avaria')||photoAt(trip.returned,'Detalhe da avaria')?['Detalhe da avaria']:[])];
+ const labels=[...(trip.departure?.intake||trip.returned?.intake?[PLATE_PHOTO_LABEL]:[]),...REQUIRED_PHOTOS,...(photoAt(trip.departure,'Detalhe da avaria')||photoAt(trip.returned,'Detalhe da avaria')?['Detalhe da avaria']:[])];
  for(let start=0;start<labels.length;start+=3){header('Comparativo fotográfico.',true);for(const label of labels.slice(start,start+3)){text(label,16,y,10,true);[trip.departure,trip.returned].forEach((i,index)=>{const x=16+index*94,p=photoAt(i,label);text(index?'RETORNO':'SAÍDA',x,y+6,6.5,true,muted);pdf.setFillColor(246,248,241);pdf.roundedRect(x,y+9,84,52,1,1,'F');const image=p&&media[p.id];if(image){const info=pdf.getImageProperties(image),scale=Math.min(82/info.width,50/info.height),w=info.width*scale,h=info.height*scale;pdf.addImage(image,'PNG',x+(84-w)/2,y+10+(50-h)/2,w,h);}else text(p?'Foto indisponível nesta cópia':'Sem foto neste registro',x+8,y+36,7,false,muted);});y+=70;}}
  const evidenceItems=[trip.departure,trip.returned].flatMap(i=>i?i.findings.filter(f=>f.evidence).map(f=>({inspection:i,finding:f})):[]);
  for(const {inspection,finding} of evidenceItems){
@@ -49,6 +51,8 @@ export function buildTripReport(trip:VehicleTrip,data:FleetData,media:Record<str
    pdf.setDrawColor(...line);pdf.line(x,sy+32,x+84,sy+32);pdf.setFontSize(8);const lines=pdf.splitTextToSize(clean(name),84) as string[];lines.slice(0,2).forEach((l,n)=>text(l,x,sy+39+n*4,8,true));text(role,x,sy+51,7,false,muted);
   });y+=62;
  }
+ section('Check-ins pontuais');for(const [inspection,label] of [[trip.departure,'Saída'],[trip.returned,'Retorno']] as const){const check=inspection?.intake?.checkIn;if(check?.status==='captured')paragraph(label+' em '+dateTime(check.capturedAt)+': '+check.lat.toFixed(5)+', '+check.lng.toFixed(5)+'; precisão aproximada '+Math.round(check.accuracy)+' m.',7.5);else if(check?.status==='unavailable')paragraph(label+' sem GPS em '+dateTime(check.attemptedAt)+': '+check.justification,7.5);else paragraph(label+': check-in não disponível neste registro.',7.5);}
+ section('Coerência dos registros');const coherence=analyzeTripCoherence(trip);coherence.signals.forEach(signal=>paragraph((signal.level==='review'?'CONFERIR: ':'')+signal.message,7.5));paragraph(coherence.disclaimer,7);
  section('Referências e emissão');paragraph('Saída: '+(trip.departure?inspectionCode(trip.departure.id):'não vinculada')+' | Retorno: '+(trip.returned?inspectionCode(trip.returned.id):'não registrado'),8);paragraph('Emitido em '+dateTime(new Date().toISOString())+'. As vistorias individuais, fotos e assinaturas originais permanecem vinculadas ao veículo.',7.5);
  if(trip.departure?.demo||trip.returned?.demo)paragraph('DEMONSTRAÇÃO: dados fictícios. Imagens de exemplo podem ter sido geradas por IA.',7);
  if(trip.departure?.pending||trip.returned?.pending)paragraph('CÓPIA LOCAL: há registros aguardando recebimento pelo servidor.',7);
