@@ -23,6 +23,14 @@ export function buildTripReport(trip:VehicleTrip,data:FleetData,media:Record<str
  for(const item of CHECKLIST){ensure(8);const a=trip.departure?.answers[item.id],b=trip.returned?.answers[item.id];if(a&&b&&a!==b){pdf.setFillColor(249,244,229);pdf.rect(16,y-4,178,7,'F');}text(item.label,17,y,8);text(answer(a),111,y,8);text(answer(b),155,y,8);pdf.setDrawColor(...line);pdf.line(16,y+3,194,y+3);y+=7.5;}
  const labels=[...REQUIRED_PHOTOS,...(photoAt(trip.departure,'Detalhe da avaria')||photoAt(trip.returned,'Detalhe da avaria')?['Detalhe da avaria']:[])];
  for(let start=0;start<labels.length;start+=3){header('Comparativo fotográfico.',true);for(const label of labels.slice(start,start+3)){text(label,16,y,10,true);[trip.departure,trip.returned].forEach((i,index)=>{const x=16+index*94,p=photoAt(i,label);text(index?'RETORNO':'SAÍDA',x,y+6,6.5,true,muted);pdf.setFillColor(246,248,241);pdf.roundedRect(x,y+9,84,52,1,1,'F');const image=p&&media[p.id];if(image){const info=pdf.getImageProperties(image),scale=Math.min(82/info.width,50/info.height),w=info.width*scale,h=info.height*scale;pdf.addImage(image,'PNG',x+(84-w)/2,y+10+(50-h)/2,w,h);}else text(p?'Foto indisponível nesta cópia':'Sem foto neste registro',x+8,y+36,7,false,muted);});y+=70;}}
+ const evidenceItems=[trip.departure,trip.returned].flatMap(i=>i?i.findings.filter(f=>f.evidence).map(f=>({inspection:i,finding:f})):[]);
+ for(const {inspection,finding} of evidenceItems){
+  header('Avaria e evidências vinculadas.',true);section(finding.area);paragraph(finding.description);paragraph('Vistoria de '+(inspection.kind==='departure'?'saída':'retorno')+' | '+inspectionCode(inspection.id),7.5);
+  const evidence=finding.evidence!,ids=[evidence.overviewPhotoId,...evidence.detailPhotoIds];
+  ids.forEach((id,index)=>{ensure(65);const image=media[id];text(index===0?'LOCALIZAÇÃO NA FOTO GERAL':'FOTO APROXIMADA '+index,16,y,7,true,muted);y+=5;
+   if(image){const info=pdf.getImageProperties(image),scale=Math.min(170/info.width,53/info.height),w=info.width*scale,h=info.height*scale,x=16+(178-w)/2;pdf.addImage(image,'PNG',x,y,w,h);if(index===0&&evidence.x!==undefined&&evidence.y!==undefined){pdf.setFillColor(...ink);pdf.circle(x+w*evidence.x/100,y+h*evidence.y/100,1.8,'F');}y+=h+8;}else{paragraph('Foto indisponível nesta cópia.');y+=20;}
+  });
+ }
  header('Ocorrências e andamento.',true);
  paragraph('O encerramento da utilização registra o retorno. Avaliação, encaminhamento, reparo e conferência final são acompanhados separadamente. Este documento mostra o histórico disponível na data da emissão.');
  const groups=[{title:'Registradas até a saída',items:priorFindings(trip,data.inspections)},{title:'Registradas no retorno',items:trip.returned?trip.returned.findings.map(finding=>({inspection:trip.returned!,finding})):[]}];

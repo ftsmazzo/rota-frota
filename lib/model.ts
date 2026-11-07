@@ -6,11 +6,13 @@ export type Driver = { id:string; name:string; role:string; initials:string; col
 export type FindingResolution = {note:string;resolvedAt:string;resolvedBy:string};
 export type FindingStatus='identified'|'assessment'|'referred'|'repairing'|'repaired'|'closed';
 export type FindingEvent={id:string;status:FindingStatus;note:string;createdAt:string;actor:string;legacy?:boolean};
-export type Finding = { id:string; area:string; description:string; severity:"low"|"medium"|"high"; x?:number; y?:number; resolved?:boolean; resolution?:FindingResolution; status?:FindingStatus; events?:FindingEvent[] };
+export type Finding = { id:string; area:string; description:string; severity:"low"|"medium"|"high"; x?:number; y?:number; evidence?:{overviewPhotoId:string;detailPhotoIds:string[];x?:number;y?:number}; resolved?:boolean; resolution?:FindingResolution; status?:FindingStatus; events?:FindingEvent[] };
 export type Photo = { id:string; label:string; data?:string; url?:string; demoSlot?:number; takenAt:string };
-export type Inspection = { id:string; vehicleId:string; driverId:string; kind:"departure"|"return"; startedAt:string; finishedAt:string; odometer:number; fuel:number; destination:string; answers:Record<string,Answer>; findings:Finding[]; notes:string; photos:Photo[]; driverSignature?:string; inspectorSignature?:string; inspectorName:string; confirmed:boolean; previousId?:string; linkNote?:{note:string;at:string;actor:string;originalPreviousId?:string}; demo?:boolean; pending?:boolean; syncError?:string; receivedAt?:string; audio?:string; location?:{lat:number;lng:number;accuracy:number} };
-export type FleetData = {vehicles:Vehicle[]; drivers:Driver[]; inspections:Inspection[]};
-export type Draft = Omit<Inspection,"finishedAt"|"confirmed"> & {step:number; updatedAt:string; findingDraft?:Partial<Finding>};
+export type Inspection = { id:string; vehicleId:string; driverId:string; kind:"departure"|"return"; startedAt:string; finishedAt:string; odometer:number; fuel:number; destination:string; answers:Record<string,Answer>; findings:Finding[]; notes:string; photos:Photo[]; driverSignature?:string; inspectorSignature?:string; inspectorName:string; confirmed:boolean; evidenceVersion?:2; voiceTranscripts?:VoiceTranscript[]; previousId?:string; linkNote?:{note:string;at:string;actor:string;originalPreviousId?:string}; demo?:boolean; pending?:boolean; syncError?:string; receivedAt?:string; audio?:string; location?:{lat:number;lng:number;accuracy:number} };
+export type VoiceClip={id:string;mimeType:string;createdAt:string;duration:number;transcript?:string;processedAt?:string};
+export type VoiceTranscript={id:string;text:string;createdAt:string};
+export type FleetData = {vehicles:Vehicle[]; drivers:Driver[]; inspections:Inspection[];refuelings?:import('./fuel').Refueling[]};
+export type Draft = Omit<Inspection,"finishedAt"|"confirmed"> & {step:number; updatedAt:string; findingDraft?:Partial<Finding>;voiceClips?:VoiceClip[]};
 export const CHECKLIST = [
  {id:"lights",group:"Segurança",label:"Faróis, lanternas e setas",hint:"Confira o funcionamento da iluminação."},
  {id:"tires",group:"Segurança",label:"Pneus e estepe",hint:"Observe desgaste, cortes e pressão aparente."},
@@ -40,8 +42,14 @@ export function validateInspection(i:Inspection,all:Inspection[]){
  if(!i.destination.trim())errors.push("Informe o destino ou a atividade.");
  if(CHECKLIST.some(item=>!i.answers[item.id]))errors.push("Responda todos os itens do checklist.");
  if(REQUIRED_PHOTOS.some(label=>!i.photos.some(p=>p.label===label&&(p.data||p.url))))errors.push("Inclua as cinco fotos obrigatórias.");
- if(i.findings.length&&!i.photos.some(p=>p.label==="Detalhe da avaria"))errors.push("Inclua uma foto de detalhe da avaria.");
+ errors.push(...validateEvidence(i));
  if(Object.values(i.answers).includes("issue")&&!i.findings.length)errors.push("Descreva a ocorrência identificada no checklist.");
  if(!i.driverSignature||!i.inspectorSignature)errors.push("Colete as duas assinaturas de confirmação.");
  const previous=all.find(p=>p.id===i.previousId);if(previous&&i.odometer<previous.odometer)errors.push("A quilometragem de retorno é menor que a de saída.");return errors;
+}
+export function validateEvidence(i:Pick<Inspection,'findings'|'photos'|'evidenceVersion'>){
+ if(i.evidenceVersion!==2)return i.findings.length&&!i.photos.some(p=>p.label==='Detalhe da avaria')?['Inclua uma foto de detalhe da avaria.']:[];
+ const errors:string[]=[];
+ for(const f of i.findings){const e=f.evidence,overview=i.photos.find(p=>p.id===e?.overviewPhotoId);if(!overview||!REQUIRED_PHOTOS.includes(overview.label))errors.push('Selecione a foto geral de '+f.area+'.');if(!e?.detailPhotoIds.length||e.detailPhotoIds.some(id=>!i.photos.some(p=>p.id===id)||id===e.overviewPhotoId))errors.push('Inclua a foto aproximada de '+f.area+'.');}
+ const details=i.findings.flatMap(f=>f.evidence?.detailPhotoIds||[]);if(new Set(details).size!==details.length)errors.push('Cada foto de detalhe deve pertencer a uma única avaria.');return errors;
 }

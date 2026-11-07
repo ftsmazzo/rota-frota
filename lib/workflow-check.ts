@@ -1,3 +1,4 @@
+import {checkEvolutionDatabase} from './evolution-check';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {createHash,randomUUID} from 'node:crypto';
@@ -32,7 +33,7 @@ export async function verifyWorkflowDeployment(){
   await fs.mkdir(mediaDirectory,{recursive:true});
   const photos:Inspection['photos']=[];
   for(const label of PHOTO_LABELS){const id=randomUUID(),file=mediaPath(id);await fs.writeFile(file,bytes,{flag:'wx',mode:0o600});files.push(file);await client.query('INSERT INTO uploaded_media(id,mime_type,byte_size,sha256,uploaded_by) VALUES($1,\'image/png\',$2,$3,$4)',[id,bytes.length,createHash('sha256').update(bytes).digest('hex'),actor.id]);photos.push({id,label,url:'/api/media/'+id,takenAt:at(250)});}
-  const make=(kind:Inspection['kind'],minutes:number,odometer:number,extra:Partial<Inspection>={}):Inspection=>inspectionSchema.parse({id:randomUUID(),vehicleId,driverId,kind,startedAt:at(minutes+1),finishedAt:at(minutes),odometer,fuel:3,destination:'Verificação transacional',answers:Object.fromEntries(CHECKLIST.map(x=>[x.id,'ok'])),findings:[],notes:'Fixture temporária',photos,driverSignature:'data:image/png;base64,'+image,inspectorSignature:'data:image/png;base64,'+image,inspectorName:actor.name,confirmed:true,...extra});
+  const make=(kind:Inspection['kind'],minutes:number,odometer:number,extra:Partial<Inspection>={}):Inspection=>inspectionSchema.parse({evidenceVersion:2,id:randomUUID(),vehicleId,driverId,kind,startedAt:at(minutes+1),finishedAt:at(minutes),odometer,fuel:3,destination:'Verificação transacional',answers:Object.fromEntries(CHECKLIST.map(x=>[x.id,'ok'])),findings:[],notes:'Fixture temporária',photos,driverSignature:'data:image/png;base64,'+image,inspectorSignature:'data:image/png;base64,'+image,inspectorName:actor.name,confirmed:true,...extra});
   const departure=make('departure',240,1000);
   await rejects('return_requires_departure',()=>recordInspection(client,make('return',245,1000),actor.id));
   await recordInspection(client,departure,actor.id);
@@ -40,7 +41,7 @@ export async function verifyWorkflowDeployment(){
   await rejects('one_active_departure',()=>recordInspection(client,make('departure',230,1000),actor.id));
   await rejects('return_must_match',()=>recordInspection(client,make('return',220,1040,{previousId:randomUUID()}),actor.id));
   await rejects('odometer_never_decreases',()=>recordInspection(client,make('return',220,999,{previousId:departure.id}),actor.id));
-  const findingId=randomUUID(),returned=make('return',220,1040,{previousId:departure.id,answers:{...departure.answers,tires:'issue'},findings:[{id:findingId,area:'Pneu',description:'Avaria de teste transacional',severity:'high',x:25,y:30}]});
+  const findingId=randomUUID(),returned=make('return',220,1040,{previousId:departure.id,answers:{...departure.answers,tires:'issue'},findings:[{id:findingId,area:'Pneu',description:'Avaria de teste transacional',severity:'high',x:25,y:30,evidence:{overviewPhotoId:photos[1].id,detailPhotoIds:[photos[5].id],x:25,y:30}}]});
   await recordInspection(client,returned,actor.id);
   let data=await readData(client),trip=buildTrips(data.inspections).find(t=>t.id===departure.id)!;
   assert('paired_distance',trip.status==='completed'&&trip.distance===40);
@@ -79,6 +80,7 @@ export async function verifyWorkflowDeployment(){
   await rejects('no_second_return_for_departure',()=>confirmTripLink(client,{departureId:historicalDeparture.id,returnId:laterReturn.id,note:'Tentativa de vínculo duplicado'},actor));
   const withHistory={...returned,findings:[{...returned.findings[0],events:[{id:randomUUID(),status:'closed' as const,note:'Concluída antes da saída',actor:actor.name,createdAt:at(210)},{id:randomUUID(),status:'assessment' as const,note:'Reaberta depois da saída',actor:actor.name,createdAt:at(190)}]}]};
   assert('historical_finding_snapshot',priorFindings({...trip,departure:{...departure,finishedAt:at(200)}},[withHistory]).length===0);
+  await checkEvolutionDatabase(client,{actorId:actor.id,driverId,vehicle:vehicle(vehicleId),inspection:returned,assert});
   await client.query('ROLLBACK');
   assert('fixtures_removed',!(await client.query('SELECT id FROM app_users WHERE id=$1',[actor.id])).rowCount);
   await fs.writeFile(marker,JSON.stringify({release:APP_RELEASE,ok:true,checks,at:new Date().toISOString()}),{mode:0o600});

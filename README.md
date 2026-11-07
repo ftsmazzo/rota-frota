@@ -36,6 +36,10 @@ As credenciais de entrega ficam em arquivo separado. Nenhuma chave, senha, sess�
 - Checklist com fotos, avarias, assinaturas e relatório PDF de três páginas.
 - Administrador e operador; gestão de acessos; troca obrigatória da senha inicial.
 - IA para organizar observações, ler hodômetro em foto e transcrever áudio, sempre sujeita à conferência do operador.
+- Vistoria por voz com preenchimento assistido: somente informações apoiadas por trechos da transcrição são propostas; conflitos, ambiguidades e itens não mencionados permanecem para conferência.
+- Cada avaria pode vincular uma foto geral com marcação e uma ou duas fotos aproximadas. As evidências aparecem na vistoria, no comparativo e nos relatórios PDF.
+- Abastecimentos podem ser registrados por cupom, áudio ou formulário, com conferência de litros, preço, total e hodômetro. O painel calcula consumo somente entre ciclos válidos de tanque cheio e acumula abastecimentos parciais.
+- O histórico de abastecimento apresenta gasto, km/L, custo por quilômetro e preço médio ponderado por posto e combustível. Registros anulados, pendentes ou com lacunas declaradas não contaminam as médias.
 - A leitura do painel usa `/api/ai/dashboard`, com resultado específico para hodômetro e combustível, até duas tentativas para falhas temporárias e limites de tempo. A confirmação aplica somente os campos legíveis; resultados inteiramente ilegíveis preservam os valores e orientam uma nova foto. Falhas ficam visíveis na tela e geram logs sem fotos, números lidos ou credenciais. `OPENROUTER_VISION_MODEL` permite configurar um modelo de visão diferente do assistente, se necessário.
 - A transcrição do visor mantém pontos e vírgulas. Leituras decimais, parciais ou sem unidade confirmada não são convertidas silenciosamente em quilômetros inteiros. O caminho `/api/ai` permanece compatível com telas anteriores.
 - Rascunhos e fila de envio no IndexedDB, isolados por usuário.
@@ -66,6 +70,8 @@ Cada nova implantação verifica os dois caminhos de leitura por HTTP no própri
 A cada versão, `instrumentation.ts` valida o fluxo de utilizações no PostgreSQL dentro de uma transação revertida: vínculos, quilômetros, odômetro, etapas de reparo, bloqueios, idempotência, atualização concorrente, reabertura e preservação dos registros legados. Usuário, veículos, fotos e registros temporários são removidos. A verificação não altera dados da frota nem senhas. O resumo fica em `/data/workflow-check.json`, e `/api/health` expõe somente `workflowSelfCheck`. Uma falha impede a nova instância de atender.
 
 Configure as variáveis do `.env.example` no serviço do EasyPanel. O `APP_URL` deve coincidir com o domínio HTTPS. `DATABASE_URL` e `OPENROUTER_API_KEY` permanecem no servidor. Não use prefixo `NEXT_PUBLIC_` para segredos.
+
+`OPENROUTER_FORMS_MODEL` seleciona o modelo usado na interpretação estruturada de vistorias por voz e cupons. Se não for definido, o aplicativo usa `OPENROUTER_VISION_MODEL`, depois `OPENROUTER_MODEL`.
 
 O administrador inicial é criado com `INITIAL_ADMIN_EMAIL`, `INITIAL_ADMIN_NAME` e `INITIAL_ADMIN_PASSWORD`. Alterar essas variáveis depois da criação não redefine a senha. A redefinição é feita em Configurações > Gerenciar acessos.
 

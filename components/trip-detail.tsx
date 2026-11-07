@@ -1,9 +1,10 @@
 "use client";
 import {useState} from 'react';
 import {Download,FileText,LoaderCircle,Route,X} from 'lucide-react';
-import {CHECKLIST,REQUIRED_PHOTOS,km,dateTime,fuelLabel,type FleetData,type Inspection,type Finding} from '../lib/model';
+import {CHECKLIST,REQUIRED_PHOTOS,km,dateTime,fuelLabel,type FleetData,type Inspection,type Finding,type Photo} from '../lib/model';
 import {buildTrips,isTripPair,priorFindings,type VehicleTrip} from '../lib/trips';
 import {FINDING_STATUS_LABELS,findingStatus} from '../lib/workflow';
+import {DamageEvidence} from './damage-evidence';
 import {Field} from './common';
 import {PhotoView} from './report';
 export type ConfirmedTripLink={departureId:string;returnId:string;note:string;at:string;actor:string;originalPreviousId?:string};
@@ -25,13 +26,13 @@ export function TripDetail({trip,data,admin,online,onClose,onInspection,onFindin
    {trip.status==='incomplete'&&admin&&<TripLinkForm trip={trip} data={data} online={online} onLinked={onLinked}/>}
    <h2>Checklist comparado</h2><div className="comparison-checklist"><div className="comparison-checklist-head"><strong>Item</strong><strong>Saída</strong><strong>Retorno</strong></div>{CHECKLIST.map(item=><div key={item.id} className={departure&&returned&&departure.answers[item.id]!==returned.answers[item.id]?'changed':''}><span>{item.label}</span><span>{answerLabel(departure?.answers[item.id])}</span><span>{answerLabel(returned?.answers[item.id])}</span></div>)}</div>
    <h2>Fotos por posição</h2><p className="helper">As imagens são apresentadas lado a lado para conferência humana. A comparação não atribui causa ou responsabilidade por uma avaria.</p><div className="comparison-photo-list">{labels.map(label=><section key={label}><h3>{label}</h3><div className="comparison-columns"><figure><figcaption>Saída</figcaption>{showPhoto(departure,label)}</figure><figure><figcaption>Retorno</figcaption>{showPhoto(returned,label)}</figure></div></section>)}</div>
-   <h2>Ocorrências registradas até a saída</h2>{before.length?before.map(({inspection,finding})=><FindingRow key={inspection.id+finding.id} finding={finding} onOpen={()=>onFinding(inspection,finding)}/>):<p className="helper">Nenhuma ocorrência anterior encontrada nos registros disponíveis.</p>}
-   <h2>Ocorrências registradas no retorno</h2>{returned?.findings.length?returned.findings.map(f=><FindingRow key={f.id} finding={f} onOpen={()=>onFinding(returned,f)}/>):<p className="helper">Nenhuma ocorrência registrada neste retorno.</p>}
+   <h2>Ocorrências registradas até a saída</h2>{before.length?before.map(({inspection,finding})=><FindingRow key={inspection.id+finding.id} finding={finding} photos={inspection.photos} onOpen={()=>onFinding(inspection,finding)}/>):<p className="helper">Nenhuma ocorrência anterior encontrada nos registros disponíveis.</p>}
+   <h2>Ocorrências registradas no retorno</h2>{returned?.findings.length?returned.findings.map(f=><FindingRow key={f.id} finding={f} photos={returned.photos} onOpen={()=>onFinding(returned,f)}/>):<p className="helper">Nenhuma ocorrência registrada neste retorno.</p>}
    <h2>Observações da utilização</h2><div className="comparison-columns"><section><h3>Saída</h3><p className="pre-wrap">{departure?.notes||'Sem observações.'}</p></section><section><h3>Retorno</h3><p className="pre-wrap">{returned?.notes||'Sem observações.'}</p></section></div>
   </article></div>
  </div>;
 }
-function FindingRow({finding,onOpen}:{finding:Finding;onOpen:()=>void}){return <article className="trip-finding"><div><span className={'badge '+(findingStatus(finding)==='closed'?'green':'amber')}>{FINDING_STATUS_LABELS[findingStatus(finding)]}</span><strong>{finding.area}</strong><p>{finding.description}</p>{finding.events?.map(event=><p className="trip-event" key={event.id}><b>{FINDING_STATUS_LABELS[event.status]}</b> · {dateTime(event.createdAt)} · {event.actor}<br/>{event.note}</p>)}</div><button className="button secondary small" onClick={onOpen}>Ver acompanhamento</button></article>;}
+function FindingRow({finding,photos,onOpen}:{finding:Finding;photos:Photo[];onOpen:()=>void}){return <article className="trip-finding"><div><span className={'badge '+(findingStatus(finding)==='closed'?'green':'amber')}>{FINDING_STATUS_LABELS[findingStatus(finding)]}</span><strong>{finding.area}</strong><p>{finding.description}</p><DamageEvidence finding={finding} photos={photos}/>{finding.events?.map(event=><p className="trip-event" key={event.id}><b>{FINDING_STATUS_LABELS[event.status]}</b> · {dateTime(event.createdAt)} · {event.actor}<br/>{event.note}</p>)}</div><button className="button secondary small" onClick={onOpen}>Ver acompanhamento</button></article>;}
 function TripLinkForm({trip,data,online,onLinked}:{trip:VehicleTrip;data:FleetData;online:boolean;onLinked:(value:ConfirmedTripLink)=>Promise<void>}){
  const [departure,setDeparture]=useState(trip.departure?.id||''),[returned,setReturned]=useState(trip.returned?.id||''),[busy,setBusy]=useState(false),[error,setError]=useState('');
  const pairs=buildTrips(data.inspections),departures=data.inspections.filter(i=>i.kind==='departure'&&i.vehicleId===trip.vehicleId&&!pairs.some(t=>t.status==='completed'&&t.departure?.id===i.id)),returns=data.inspections.filter(i=>i.kind==='return'&&i.vehicleId===trip.vehicleId&&!pairs.some(t=>t.status==='completed'&&t.returned?.id===i.id));

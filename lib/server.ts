@@ -7,7 +7,8 @@ export async function readData(queryable:Pick<pg.PoolClient,'query'>=db()):Promi
  const events=await queryable.query('SELECT e.*,u.full_name AS actor_name FROM finding_events e LEFT JOIN app_users u ON u.id=e.actor_id ORDER BY e.sequence');
  const resolutions=await queryable.query('SELECT r.*,u.full_name AS actor_name FROM finding_resolutions r LEFT JOIN app_users u ON u.id=r.resolved_by');
  const links=await queryable.query('SELECT l.*,u.full_name AS actor_name FROM trip_links l LEFT JOIN app_users u ON u.id=l.actor_id');
- return {vehicles:rows.filter(r=>r.kind==='vehicle').map(r=>r.payload),drivers:rows.filter(r=>r.kind==='driver').map(r=>r.payload),inspections:rows.filter(r=>r.kind==='inspection').map(r=>{
+ const fuel=await queryable.query('SELECT r.*,u.full_name AS actor_name FROM refueling_records r LEFT JOIN app_users u ON u.id=r.voided_by ORDER BY occurred_at DESC');
+ return {refuelings:fuel.rows.map(r=>({...r.payload,receivedAt:new Date(r.created_at).toISOString(),...(r.voided_at?{voided:{at:new Date(r.voided_at).toISOString(),actor:r.actor_name||'Administrador',reason:r.void_reason}}:{})})),vehicles:rows.filter(r=>r.kind==='vehicle').map(r=>r.payload),drivers:rows.filter(r=>r.kind==='driver').map(r=>r.payload),inspections:rows.filter(r=>r.kind==='inspection').map(r=>{
    const original=r.payload as Inspection,link=links.rows.find(l=>l.return_id===original.id);
    const inspection:Inspection=link?{...original,previousId:link.departure_id,...link.corrected?{linkNote:{note:link.note,at:new Date(link.created_at).toISOString(),actor:link.actor_name||'Administrador',originalPreviousId:original.previousId}}:{}}:original;
    return {...inspection,findings:inspection.findings.map(f=>{
@@ -20,6 +21,13 @@ export async function readData(queryable:Pick<pg.PoolClient,'query'>=db()):Promi
  })};
 }
 export function jsonError(message:string,status=500){return Response.json({error:message},{status,headers:{'Cache-Control':'no-store'}})}
+export async function readJsonBody(request:Request,maxBytes:number){
+ const declared=Number(request.headers.get('content-length'));if(Number.isFinite(declared)&&declared>maxBytes)throw new Error('BODY_TOO_LARGE');
+ if(!request.body)return null;const reader=request.body.getReader(),chunks:Uint8Array[]=[];let total=0;
+ for(;;){const {done,value}=await reader.read();if(done)break;if(value){total+=value.byteLength;if(total>maxBytes){await reader.cancel();throw new Error('BODY_TOO_LARGE');}chunks.push(value);}}
+ const bytes=new Uint8Array(total);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.byteLength;}
+ try{return JSON.parse(new TextDecoder().decode(bytes));}catch{return null;}
+}
 export function safeId(id:string){return /^[a-zA-Z0-9_-]{1,100}$/.test(id)}
 export function isSameOrigin(request:Request){const origin=request.headers.get('origin');if(!origin)return true;return origin===process.env.APP_URL||origin===new URL(request.url).origin}
 export function canonical(value:unknown):string{if(value===null||typeof value!=='object')return JSON.stringify(value);if(Array.isArray(value))return '['+value.map(canonical).join(',')+']';return '{'+Object.entries(value).sort(([a],[b])=>a.localeCompare(b)).map(([k,v])=>JSON.stringify(k)+':'+canonical(v)).join(',')+'}';}

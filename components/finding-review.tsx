@@ -1,6 +1,7 @@
 "use client";
 import {useRef,useState} from 'react';
 import {CheckCircle2,ClipboardCheck,FileText,LoaderCircle} from 'lucide-react';
+import {DamageEvidence} from './damage-evidence';
 import {Badge,Field,Modal} from './common';
 import {dateTime,getVehicleState,openVehicleFindings,type Finding,type FindingStatus,type Inspection,type Vehicle} from '../lib/model';
 import {findingStatus,FINDING_STATUS_LABELS,FINDING_TRANSITIONS} from '../lib/workflow';
@@ -25,7 +26,7 @@ export function FindingReview({vehicle,inspection,finding,inspections,canResolve
   <article className="pending-finding"><span className={'badge '+(closed?'green':'amber')}>{FINDING_STATUS_LABELS[status]}</span><strong>{finding.area}</strong><p>{finding.description}</p><small>Vistoria de {dateTime(inspection.finishedAt)}</small></article>
   {closed&&<div className="finding-complete"><CheckCircle2 size={20}/><p>A conferência foi concluída. O registro original e todas as atualizações continuam no histórico.</p></div>}
   {head?.legacy&&<div className="info-box">Esta conclusão veio do fluxo anterior. Se houve apenas encaminhamento para reparo, reabra a ocorrência abaixo para continuar o acompanhamento.</div>}
-  <h3 className="small-title">Linha do tempo</h3><ol className="finding-timeline"><li><strong>Identificada</strong><p>{finding.description}</p><small>{inspection.inspectorName} · {dateTime(inspection.finishedAt)}</small></li>{events.map(event=><li key={event.id}><strong>{FINDING_STATUS_LABELS[event.status]}{event.legacy?' · fluxo anterior':''}</strong><p>{event.note}</p><small>{event.actor} · {dateTime(event.createdAt)}</small></li>)}</ol>
+  <DamageEvidence finding={finding} photos={inspection.photos}/><h3 className="small-title">Linha do tempo</h3><ol className="finding-timeline"><li><strong>Identificada</strong><p>{finding.description}</p><small>{inspection.inspectorName} · {dateTime(inspection.finishedAt)}</small></li>{events.map(event=><li key={event.id}><strong>{FINDING_STATUS_LABELS[event.status]}{event.legacy?' · fluxo anterior':''}</strong><p>{event.note}</p><small>{event.actor} · {dateTime(event.createdAt)}</small></li>)}</ol>
   {!canResolve?<div className="info-box">Um administrador registra as etapas de avaliação, reparo e conferência final. O histórico pode ser consultado por toda a equipe.</div>
   :<form onSubmit={async event=>{event.preventDefault();if(!target)return;setBusy(true);setError('');try{
     const values=new FormData(event.currentTarget),signature=JSON.stringify({target,note,head:head?.id||null});

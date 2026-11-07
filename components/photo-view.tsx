@@ -1,0 +1,2 @@
+import type {Photo} from "../lib/model";
+export function PhotoView({photo,className=""}:{photo:Photo;className?:string}){return photo.demoSlot!==undefined?<div role="img" aria-label={photo.label+" · imagem fictícia"} className={"photo-view demo-photo "+className} style={{backgroundImage:`url(${photo.url})`,backgroundPosition:`${(photo.demoSlot%3)*50}% ${Math.floor(photo.demoSlot/3)*100}%`}}/>:<img className={"photo-view "+className} src={photo.data||photo.url} alt={photo.label}/>;}

@@ -3,6 +3,7 @@ import "./rota.css";
 import "./report.css";
 import "./auth.css";
 import "./mobile.css";
+import "./evolution.css";
 import {PwaUpdater} from '../components/pwa-updater';
 import {APP_RELEASE} from '../lib/release';
 
