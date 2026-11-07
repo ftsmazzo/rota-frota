@@ -25,12 +25,12 @@ export async function verifyWorkflowDeployment(){
  const actor={id:randomUUID(),name:'Verificação de implantação'},driverId=randomUUID(),vehicleId=randomUUID(),legacyVehicleId=randomUUID(),historyVehicleId=randomUUID();
  const image='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',bytes=Buffer.from(image,'base64');
  const at=(minutes:number)=>new Date(Date.now()-minutes*60000).toISOString();
- const vehicle=(id:string):Vehicle=>({id,model:'Verificação temporária',plate:'TST1A23',year:'2026',color:'Branco',odometer:1000,unit:'Teste transacional',state:'available',maintenanceAt:10000,illustration:'sedan'});
+ const vehicle=(id:string,plate='TST1A23'):Vehicle=>({id,model:'Verificação temporária',plate,year:'2026',color:'Branco',odometer:1000,unit:'Teste transacional',state:'available',maintenanceAt:10000,illustration:'sedan'});
  try{
   await client.query('BEGIN');
   await client.query("INSERT INTO app_users(id,email,full_name,password_hash,role,active) VALUES($1,$2,$3,'disabled','admin',false)",[actor.id,actor.id+'@check.invalid',actor.name]);
   await client.query("INSERT INTO fleet_records(id,kind,payload) VALUES($1,'driver',$2)",[driverId,JSON.stringify({id:driverId,name:'Motorista temporário',role:'Teste',initials:'VT',color:'#eee'})]);
-  for(const id of [vehicleId,legacyVehicleId,historyVehicleId])await client.query("INSERT INTO fleet_records(id,kind,payload) VALUES($1,'vehicle',$2)",[id,JSON.stringify(vehicle(id))]);
+  for(const [id,plate] of [[vehicleId,'TST1A23'],[legacyVehicleId,'LGC1A23'],[historyVehicleId,'HST1A23']])await client.query("INSERT INTO fleet_records(id,kind,payload) VALUES($1,'vehicle',$2)",[id,JSON.stringify(vehicle(id,plate))]);
   await fs.mkdir(mediaDirectory,{recursive:true});
   const photos:Inspection['photos']=[];
   for(const label of [PLATE_PHOTO_LABEL,...PHOTO_LABELS]){const id=randomUUID(),file=mediaPath(id);await fs.writeFile(file,bytes,{flag:'wx',mode:0o600});files.push(file);await client.query('INSERT INTO uploaded_media(id,mime_type,byte_size,sha256,uploaded_by) VALUES($1,\'image/png\',$2,$3,$4)',[id,bytes.length,createHash('sha256').update(bytes).digest('hex'),actor.id]);photos.push({id,label,url:'/api/media/'+id,takenAt:at(250)});}
