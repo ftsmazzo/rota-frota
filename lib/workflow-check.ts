@@ -88,7 +88,7 @@ export async function verifyWorkflowDeployment(){
   console.info(JSON.stringify({event:'workflow_check_completed',release:APP_RELEASE,ok:true,checks}));
  }catch(error){
   await client.query('ROLLBACK').catch(()=>{});
-  console.error(JSON.stringify({event:'workflow_check_failed',release:APP_RELEASE,check:error instanceof Error&&error.message.startsWith('workflow_check:')?error.message:'database_or_storage_check'}));
+  console.error(JSON.stringify({event:'workflow_check_failed',release:APP_RELEASE,check:error instanceof Error&&error.message.startsWith('workflow_check:')?error.message:'database_or_storage_check',reason:error instanceof Error?error.message:'unknown'}));
   throw Error('A verificação do fluxo de utilizações falhou. Consulte workflow_check_failed.');
  }finally{client.release();for(const file of files)await fs.unlink(file).catch(()=>{});}
 }
