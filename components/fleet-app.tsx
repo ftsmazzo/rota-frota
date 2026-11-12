@@ -1,7 +1,7 @@
 "use client";
 import type {AppUser} from "../lib/auth-types";
 import {useState,useEffect,useRef,useCallback} from "react";
-import {LayoutDashboard,CarFront,ClipboardCheck,Users,FileText,ArrowUpRight,ArrowRight,ArrowLeft,Plus,ChevronRight,Check,Clock,MapPin,Activity,AlertTriangle,ShieldCheck,Sparkles,Wifi,WifiOff,RefreshCw,CloudCheck,CloudUpload,Menu,CheckCircle2,LoaderCircle,Settings2,Gauge,Route,Fuel} from "lucide-react";
+import {LayoutDashboard,X,CarFront,ClipboardCheck,Users,FileText,ArrowUpRight,ArrowRight,ArrowLeft,Plus,ChevronRight,Check,Clock,MapPin,Activity,AlertTriangle,ShieldCheck,Sparkles,Wifi,WifiOff,RefreshCw,CloudCheck,CloudUpload,Menu,CheckCircle2,LoaderCircle,Settings2,Gauge,Route,Fuel} from "lucide-react";
 import {makeDemoData} from "../lib/demo";
 import {km,dateTime,shortDate,inspectionCode,getVehicleState,vehicleNeedsAttention,type FleetData,type Vehicle,type Inspection,type Draft} from "../lib/model";
 import {loadLocal,saveLocal,syncInspection,syncRefueling,deleteAudioClip,type LocalState} from "../lib/offline";
@@ -52,7 +52,146 @@ export default function FleetApp({user,onLogout}:{user:AppUser;onLogout:()=>Prom
  function vehicleCard(v:Vehicle,index:number){return <VehicleCard key={v.id} vehicle={v} inspections={sorted} drivers={data.drivers} index={index} onOpenDetail={setVehicleDetail} onStartInspection={startInspection} getVehicleState={getVehicleState} vehicleNeedsAttention={vehicleNeedsAttention}/>;}
  function table(rows:Inspection[]){return <div className="table-scroll"><table className="inspection-table"><thead><tr><th>VEÍCULO</th><th>MOTORISTA</th><th>OPERAÇÃO</th><th>DATA E HORA</th><th>REGISTRO</th><th/></tr></thead><tbody>{rows.map(i=>{const v=data.vehicles.find(v=>v.id===i.vehicleId),driver=data.drivers.find(d=>d.id===i.driverId);return <tr key={i.id}><td><div className="table-car"><span><CarFront size={19}/></span><div><strong>{v?.model}</strong><small>{v?.plate}</small></div></div></td><td><div className="driver-line"><Avatar driver={driver} small/>{driver?.name}</div></td><td><span className={"operation "+i.kind}>{i.kind==="departure"?<ArrowUpRight size={14}/>:<ArrowLeft size={14}/>} {i.kind==="departure"?"Saída":"Retorno"}</span></td><td><strong>{shortDate(i.finishedAt)}</strong><small>{new Date(i.finishedAt).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}</small></td><td><span className={"badge "+(i.pending||i.findings.length?"amber":"green")}>{i.pending?"Envio pendente":i.findings.length?i.findings.length+" apontamento"+(i.findings.length>1?"s":""):"Conferido"}</span></td><td><button className="icon-button" aria-label={"Abrir relatório "+inspectionCode(i.id)} onClick={()=>setReport(i)}><FileText size={18}/></button></td></tr>})}</tbody></table>{!rows.length&&<div className="empty-state"><strong>Nenhum registro encontrado</strong><p>Experimente outra busca ou registre uma nova vistoria.</p></div>}</div>}
  if(!loaded)return <div className="app-shell"><div className="main-shell" style={{marginLeft:0}}><header className="topbar"><div className="breadcrumb"><span className="brand-mark" style={{width:28,height:28,fontSize:24}}>r</span><strong>Preparando sua frota…</strong><LoaderCircle className="spin" size={16}/></div></header><main className="main-content"><div className="stats-grid">{[1,2,3,4].map(k=><div key={k} className="stat-card skeleton-card"><div className="skeleton-line" style={{width:"55%",height:13}}/><div className="skeleton-line" style={{width:"35%",height:28,margin:"10px 0"}}/><div className="skeleton-line" style={{width:"75%",height:12}}/></div>)}</div><div className="vehicle-grid">{[1,2,3].map(k=><div key={k} className="vehicle-card skeleton-card"><div className="skeleton-line" style={{width:"30%",height:13}}/><div className="skeleton-box" style={{height:92,margin:"12px 0"}}/><div className="skeleton-line" style={{width:"65%",height:16}}/><div className="skeleton-line" style={{width:"45%",height:13,margin:"8px 0 14px"}}/></div>)}</div></main></div></div>;
- return <div className="app-shell"><aside className={"sidebar "+(mobile?"open":"")}><a className="brand" href="#" onClick={e=>{e.preventDefault();navigate("overview")}}><span className="brand-mark">r</span><span>rota<span className="brand-dot">.</span></span></a><div className="workspace"><span className="workspace-icon"><ShieldCheck size={19}/></span><div><strong>Operação SST</strong><small>Frota interna</small></div></div><span className="nav-caption">GESTÃO DA FROTA</span><nav>{NAV.map(item=><button key={item.id} className={view===item.id?"active":""} onClick={()=>navigate(item.id)}><item.icon size={19}/>{item.label}{item.id==="fleet"&&<span className="nav-count">{data.vehicles.length}</span>}</button>)}</nav><div className="sidebar-assistant"><span className="assistant-star"><Sparkles size={22}/></span><strong>Um copiloto na sua rotina.</strong><p>Organize observações e encontre o que precisa.</p><button onClick={()=>{setAssistant(true);setMobile(false)}}>Conhecer assistente <ArrowUpRight size={16}/></button></div><div className="sidebar-bottom"><button onClick={()=>setSettings(true)}><Settings2 size={18}/> Configurações</button><ThemeToggle variant="sidebar"/><div className="sidebar-profile"><Avatar driver={signedInDriver}/><div><strong>{user.name}</strong><small>{user.role==="admin"?"Administrador":"Operador"}</small></div><span className="profile-online"/></div></div></aside>{mobile&&<button className="mobile-backdrop" aria-label="Fechar menu" onClick={()=>setMobile(false)}/>}
+ return <div className="app-shell"><aside className={"sidebar " + (mobile ? "open" : "")}>
+        <div className="sidebar-anim-item" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+          <a className="brand" href="#" onClick={e => { e.preventDefault(); navigate("overview"); }} style={{ display: "flex", alignItems: "center", gap: "10px", padding: 0, textDecoration: "none" }}>
+            <span style={{ width: "40px", height: "40px", borderRadius: "12px", background: "var(--accent)", color: "var(--on-accent)", fontFamily: "Georgia, serif", fontStyle: "italic", fontWeight: 700, fontSize: "30px", display: "flex", alignItems: "center", justifyContent: "center", paddingBottom: "5px", boxSizing: "border-box", flexShrink: 0 }}>r</span>
+            <span style={{ fontSize: "30px", fontWeight: 800, letterSpacing: "-0.04em", color: "var(--on-brand)" }}>rota<span style={{ color: "var(--accent)" }}>.</span></span>
+          </a>
+          <button type="button" className="sidebar-close-btn" aria-label="Fechar menu" onClick={() => setMobile(false)}>
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="sidebar-anim-item sidebar-operation-card" style={{ animationDelay: ".05s" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+              <span style={{ fontSize: "15px", fontWeight: 700, color: "var(--on-brand)" }}>Operação SST</span>
+              <span style={{ fontSize: "12px", color: "var(--on-brand-2)" }}>Frota interna · {data.vehicles.length} veículos</span>
+            </div>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "10px", fontWeight: 700, letterSpacing: ".12em", color: "var(--accent)" }}>
+              <span className="live" style={{ width: "7px", height: "7px", borderRadius: "50%", background: "var(--accent)", color: "var(--accent)" }} />
+              AO VIVO
+            </span>
+          </div>
+
+          <div style={{ display: "flex", gap: "3px", height: "6px", width: "100%" }}>
+            <span className="seg" style={{ flex: counts.available || (data.vehicles.length === 0 ? 1 : 0), display: counts.available > 0 || data.vehicles.length === 0 ? "block" : "none", borderRadius: "3px", background: "var(--accent)", animationDelay: ".3s" }} />
+            <span className="seg" style={{ flex: counts.out || 0, display: counts.out > 0 ? "block" : "none", borderRadius: "3px", background: "#9cc4e4", animationDelay: ".4s" }} />
+            <span className="seg" style={{ flex: counts.attention || 0, display: counts.attention > 0 ? "block" : "none", borderRadius: "3px", background: "#f0b96e", animationDelay: ".5s" }} />
+          </div>
+
+          <div style={{ display: "flex", gap: "14px", fontSize: "12px", color: "var(--on-brand-2)" }}>
+            <span><b className="mono" style={{ color: "var(--on-brand)", fontFamily: "var(--font-mono)" }}>{counts.available}</b> livres</span>
+            <span><b className="mono" style={{ color: "var(--on-brand)", fontFamily: "var(--font-mono)" }}>{counts.out}</b> na rua</span>
+            <span><b className="mono" style={{ color: "var(--on-brand)", fontFamily: "var(--font-mono)" }}>{counts.attention}</b> atenção</span>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px", flex: "0 1 auto", minHeight: 0 }}>
+          <span className="sidebar-anim-item sidebar-nav-caption" style={{ animationDelay: ".1s" }}>GESTÃO DA FROTA</span>
+
+          <nav>
+            {NAV.map((item, index) => {
+              const isActive = view === item.id;
+              let chip: { label: string | number; color: string; bg: string; pulse?: boolean } | null = null;
+
+              if (item.id === "fleet") {
+                chip = { label: data.vehicles.length, color: "var(--on-brand)", bg: "var(--brand-soft)" };
+              } else if (item.id === "trips" && counts.out > 0) {
+                chip = { label: `${counts.out} na rua`, color: "#9cc4e4", bg: "#9cc4e41f", pulse: true };
+              } else if (item.id === "inspections") {
+                const pendingCount = pendingFindings.length > 0 ? pendingFindings.length : pending;
+                if (pendingCount > 0) {
+                  chip = {
+                    label: `${pendingCount} ${pendingCount === 1 ? "pendente" : "pendentes"}`,
+                    color: "#f0b96e",
+                    bg: "#f0b96e1f"
+                  };
+                }
+              } else if (item.id === "team") {
+                chip = { label: data.drivers.length, color: "var(--on-brand)", bg: "var(--brand-soft)" };
+              }
+
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  aria-current={isActive ? "page" : undefined}
+                  className={"sidebar-anim-item sidebar-nav-item " + (isActive ? "active" : "")}
+                  style={{ animationDelay: `${0.12 + index * 0.04}s` }}
+                  onClick={() => navigate(item.id)}
+                >
+                  {isActive && <span className="shine" />}
+                  <span className={"sidebar-item-icon-box " + (isActive ? "active" : "")}>
+                    <item.icon size={19} />
+                  </span>
+                  <span className={"sidebar-item-label " + (isActive ? "active" : "")}>{item.label}</span>
+                  {chip && (
+                    <span className="sidebar-item-chip" style={{ color: chip.color, background: chip.bg }}>
+                      {chip.pulse && <span className="live" style={{ width: 6, height: 6, borderRadius: "50%", background: "currentColor" }} />}
+                      <span className="mono" style={{ fontFamily: "var(--font-mono)" }}>{chip.label}</span>
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+
+        <div className="sidebar-anim-item sidebar-copilot-card" style={{ animationDelay: ".5s" }}>
+          <div className="sidebar-copilot-halo" />
+          <div className="sidebar-copilot-inner">
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <span style={{ width: "32px", height: "32px", borderRadius: "10px", background: "var(--accent)", color: "var(--on-accent)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Sparkles size={17} />
+              </span>
+              <span style={{ display: "flex", flexDirection: "column" }}>
+                <span style={{ fontSize: "14px", fontWeight: 700, color: "var(--on-brand)" }}>Copiloto Rota</span>
+                <span style={{ fontSize: "12px", color: "var(--on-brand-2)" }}>Pergunte sobre a sua frota</span>
+              </span>
+            </div>
+            <button
+              type="button"
+              className="sidebar-copilot-btn"
+              onClick={() => {
+                setAssistant(true);
+                setMobile(false);
+              }}
+            >
+              <span>Quais carros estão livres?</span>
+              <span className="sidebar-copilot-arrow">
+                <ArrowRight size={14} />
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <div className="sidebar-anim-item sidebar-footer" style={{ animationDelay: ".55s" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
+            <span style={{ width: "36px", height: "36px", borderRadius: "50%", background: "var(--accent)", color: "var(--on-accent)", fontSize: "12px", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              {signedInDriver.initials.toUpperCase()}
+            </span>
+            <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+              <strong style={{ fontSize: "14px", fontWeight: 600, color: "var(--on-brand)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {user.name}
+              </strong>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!pending || window.confirm("Há vistorias salvas apenas neste aparelho. Elas serão preservadas para o seu próximo acesso. Deseja sair?")) {
+                    void onLogout();
+                  }
+                }}
+                style={{ fontSize: "11px", color: "var(--on-brand-2)", background: "transparent", border: 0, padding: 0, textAlign: "left", cursor: "pointer" }}
+              >
+                Sair da conta
+              </button>
+            </div>
+          </div>
+          <ThemeToggle variant="sidebar" />
+        </div>
+      </aside>{mobile&&<button className="mobile-backdrop" aria-label="Fechar menu" onClick={()=>setMobile(false)}/>}
  <div className="main-shell"><header className="topbar"><div className="breadcrumb"><button className="icon-button mobile-menu" onClick={()=>setMobile(true)} aria-label="Abrir menu"><Menu size={22}/></button><span>Workspace</span><ChevronRight size={13}/><strong>{NAV.find(n=>n.id===view)?.label}</strong></div><div className="topbar-right"><span className="demo-label">Frota interna</span><button className={"connection-chip "+(!online?"offline":"")} onClick={()=>setSettings(true)}>{online?<Wifi size={14}/>:<WifiOff size={14}/>}<span>{!online?"Offline":pending?pending+" envio(s) pendente(s)":"Conectado"}</span></button><span className="top-divider"/><ThemeToggle variant="topbar"/><Avatar driver={signedInDriver} small/></div></header><main className="main-content">
  {storageError&&<div className="error-banner"><AlertTriangle size={18}/>{storageError}</div>}{!online&&<div className="offline-banner"><WifiOff size={16}/><span>Você está offline. As vistorias são salvas neste aparelho.</span><small>{local.lastSync?"Última atualização: "+dateTime(local.lastSync):"Histórico ainda não sincronizado"}</small></div>}
  <div className="page-heading"><div><div className="eyebrow">{view==="overview"?"CUIDADO EM CADA PERCURSO":"GESTÃO DA FROTA"}</div><h1>{view==="overview"?"Sua frota, em boas mãos.":view==="fleet"?"Cada veículo, um histórico.":view==="inspections"?"Vistorias sem complicação.":view==="team"?"Pessoas que movem a operação.":view==="fuel"?"Combustível sob controle.":view==="trips"?"Cada utilização, do início ao retorno.":"Tudo registrado. Bem apresentado."}</h1><p>{view==="overview"?"Uma visão clara dos veículos e da rotina da sua equipe.":view==="fleet"?"Acompanhe disponibilidade, uso e condições de cada carro.":view==="inspections"?"Da saída ao retorno, acompanhe cada conferência.":view==="team"?"Motoristas e responsáveis pelas atividades da frota.":view==="fuel"?"Registre abastecimentos, acompanhe consumo e compare os preços pagos.":view==="trips"?"Compare saída e retorno, acompanhe os quilômetros e consulte todo o histórico.":"Consulte e baixe os relatórios de cada vistoria."}</p></div>{!(view==="overview"||view==="fleet"||view==="team"||view==="fuel")&&<button className="button primary new-inspection" onClick={()=>startInspection()}><Plus size={18}/>{local.draft?"Continuar vistoria":"Nova vistoria"}</button>}</div>
