@@ -1,41 +1,182 @@
 "use client";
 import {useState} from 'react';
-import {AlertTriangle,Download,FileText,LoaderCircle,MapPin,Route,X} from 'lucide-react';
+import {AlertTriangle,Download,FileText,LoaderCircle,MapPin,Route,X,ArrowUpRight,ArrowDownLeft,Gauge} from 'lucide-react';
 import {CHECKLIST,REQUIRED_PHOTOS,km,dateTime,fuelLabel,type FleetData,type Inspection,type Finding,type Photo} from '../lib/model';
 import {buildTrips,isTripPair,priorFindings,type VehicleTrip} from '../lib/trips';
 import {FINDING_STATUS_LABELS,findingStatus} from '../lib/workflow';
 import {DamageEvidence} from './damage-evidence';
 import {Field} from './common';
 import {PhotoView} from './report';
+import {Odometer} from './ui';
 import {analyzeTripCoherence} from '../lib/trip-coherence';
 import {PLATE_PHOTO_LABEL} from '../lib/inspection-intake';
+
 export type ConfirmedTripLink={departureId:string;returnId:string;note:string;at:string;actor:string;originalPreviousId?:string};
 const answerLabel=(value?:string)=>value==='ok'?'Conforme':value==='issue'?'Atenção':value==='na'?'Não se aplica':'Sem registro';
 export function tripPhoto(inspection:Inspection|undefined,label:string){return inspection?.photos.find(p=>p.label===label||(label==='Lateral direita'&&p.label==='Lateral 1')||(label==='Lateral esquerda'&&p.label==='Lateral 2'));}
+
 export function TripDetail({trip,data,admin,online,onClose,onInspection,onFinding,onLinked}:{trip:VehicleTrip;data:FleetData;admin:boolean;online:boolean;onClose:()=>void;onInspection:(i:Inspection)=>void;onFinding:(i:Inspection,f:Finding)=>void;onLinked:(link:ConfirmedTripLink)=>Promise<void>}){
  const [busy,setBusy]=useState(false),[error,setError]=useState('');const vehicle=data.vehicles.find(v=>v.id===trip.vehicleId)!,departure=trip.departure,returned=trip.returned,coherence=analyzeTripCoherence(trip);
  const before=priorFindings(trip,data.inspections),labels=[...(departure?.intake||returned?.intake?[PLATE_PHOTO_LABEL]:[]),...REQUIRED_PHOTOS,...(tripPhoto(departure,'Detalhe da avaria')||tripPhoto(returned,'Detalhe da avaria')?['Detalhe da avaria']:[])];
  const showPhoto=(i:Inspection|undefined,label:string)=>{const photo=tripPhoto(i,label);return photo&&(online||photo.data||photo.demoSlot!==undefined)?<PhotoView photo={photo}/>:<div className="comparison-photo-missing">{photo?'Foto disponível com conexão':'Sem foto neste registro'}</div>;};
- return <div className="report-overlay trip-overlay" role="dialog" aria-modal="true" aria-label="Utilização do veículo"><header className="report-toolbar"><div><Route size={22}/><div><strong>Utilização do veículo</strong><small>{vehicle.model} · {vehicle.plate}</small></div></div><div><button className="button primary" disabled={busy} onClick={async()=>{setBusy(true);setError('');try{const {downloadTripReport}=await import('../lib/trip-pdf');await downloadTripReport(trip,data);}catch{setError('Não foi possível gerar o PDF completo. Conecte-se para carregar as fotos e tente novamente.');}finally{setBusy(false);}}}>{busy?<LoaderCircle className="spin" size={15}/>:<Download size={15}/>} PDF completo</button><button className="icon-button" aria-label="Fechar utilização" onClick={onClose}><X size={21}/></button></div></header>
-  <div className="report-scroll trip-detail-scroll"><article className="trip-sheet"><span className="eyebrow">HISTÓRICO DO VEÍCULO</span><h1>{vehicle.model} <span className="plate">{vehicle.plate}</span></h1><p>{departure?.destination||returned?.destination}</p>
-   <div className="trip-summary"><div><small>Situação da utilização</small><strong>{trip.status==='completed'?'Encerrada':trip.status==='active'?'Em uso':'Vínculo incompleto'}</strong></div><div><small>Quilômetros registrados</small><strong>{trip.distance!==null?km(trip.distance):'Aguardando vínculo / retorno'}</strong></div></div>
-   {trip.status==='completed'&&<section className={'coherence-card '+(coherence.status==='review_recommended'?'review':'')}><div className="section-heading"><div><span className="eyebrow">COERÊNCIA DA UTILIZAÇÃO</span><h3>{coherence.status==='review_recommended'?'Há dados para conferir':'Nenhum alerta automático relevante'}</h3></div>{coherence.status==='review_recommended'?<AlertTriangle size={21}/>:<MapPin size={21}/>}</div>{coherence.signals.map((signal,index)=><p key={index} className={signal.level==='review'?'fuel-error':''}>{signal.message}</p>)}<small>{coherence.disclaimer}</small></section>}
-   <p className="helper">Encerrar a utilização registra o retorno. Ocorrências de avaliação e reparo continuam acompanhadas separadamente até a conferência final.</p>
-   {(departure?.demo||returned?.demo)&&<div className="demo-banner">Dados demonstrativos. Fotos ilustrativas nos registros identificados como demonstração.</div>}
-   {error&&<div className="error-banner">{error}</div>}
-   {trip.status==='incomplete'&&<div className="info-box"><span>{trip.reason} A distância não entra nos totais até que o vínculo seja conferido.</span></div>}
-   <h2>Saída e retorno</h2><div className="comparison-columns">{[[departure,'Saída'],[returned,'Retorno']].map(([value,label])=>{const i=value as Inspection|undefined;return <section key={String(label)}><h3>{String(label)}</h3>{i?<><strong>{km(i.odometer)}</strong><p>{fuelLabel(i.fuel)}</p><p>{dateTime(i.finishedAt)}</p><p>Motorista: {data.drivers.find(d=>d.id===i.driverId)?.name}</p><button className="button secondary small" onClick={()=>onInspection(i)}><FileText size={14}/> Ver vistoria de {String(label).toLowerCase()}</button></>:<p>Sem registro vinculado.</p>}</section>;})}</div>
-   {returned?.linkNote&&<div className="info-box"><span>Vínculo conferido por {returned.linkNote.actor} em {dateTime(returned.linkNote.at)}. {returned.linkNote.note}</span></div>}
-   {trip.status==='incomplete'&&admin&&<TripLinkForm trip={trip} data={data} online={online} onLinked={onLinked}/>}
-   <h2>Checklist comparado</h2><div className="comparison-checklist"><div className="comparison-checklist-head"><strong>Item</strong><strong>Saída</strong><strong>Retorno</strong></div>{CHECKLIST.map(item=><div key={item.id} className={departure&&returned&&departure.answers[item.id]!==returned.answers[item.id]?'changed':''}><span>{item.label}</span><span>{answerLabel(departure?.answers[item.id])}</span><span>{answerLabel(returned?.answers[item.id])}</span></div>)}</div>
-   <h2>Fotos por posição</h2><p className="helper">As imagens são apresentadas lado a lado para conferência humana. A comparação não atribui causa ou responsabilidade por uma avaria.</p><div className="comparison-photo-list">{labels.map(label=><section key={label}><h3>{label}</h3><div className="comparison-columns"><figure><figcaption>Saída</figcaption>{showPhoto(departure,label)}</figure><figure><figcaption>Retorno</figcaption>{showPhoto(returned,label)}</figure></div></section>)}</div>
-   <h2>Ocorrências registradas até a saída</h2>{before.length?before.map(({inspection,finding})=><FindingRow key={inspection.id+finding.id} finding={finding} photos={inspection.photos} onOpen={()=>onFinding(inspection,finding)}/>):<p className="helper">Nenhuma ocorrência anterior encontrada nos registros disponíveis.</p>}
-   <h2>Ocorrências registradas no retorno</h2>{returned?.findings.length?returned.findings.map(f=><FindingRow key={f.id} finding={f} photos={returned.photos} onOpen={()=>onFinding(returned,f)}/>):<p className="helper">Nenhuma ocorrência registrada neste retorno.</p>}
-   <h2>Observações da utilização</h2><div className="comparison-columns"><section><h3>Saída</h3><p className="pre-wrap">{departure?.notes||'Sem observações.'}</p></section><section><h3>Retorno</h3><p className="pre-wrap">{returned?.notes||'Sem observações.'}</p></section></div>
-  </article></div>
- </div>;
+
+ return (
+  <div className="report-overlay trip-overlay" role="dialog" aria-modal="true" aria-label="Utilização do veículo">
+   <header className="report-toolbar">
+    <div>
+     <Route size={22}/>
+     <div>
+      <strong>Utilização do veículo</strong>
+      <small>{vehicle.model} · {vehicle.plate}</small>
+     </div>
+    </div>
+    <div>
+     <button className="button primary" disabled={busy} onClick={async()=>{setBusy(true);setError('');try{const {downloadTripReport}=await import('../lib/trip-pdf');await downloadTripReport(trip,data);}catch{setError('Não foi possível gerar o PDF completo. Conecte-se para carregar as fotos e tente novamente.');}finally{setBusy(false);}}}>
+      {busy?<LoaderCircle className="spin" size={15}/>:<Download size={15}/>} PDF completo
+     </button>
+     <button className="icon-button" aria-label="Fechar utilização" onClick={onClose}><X size={21}/></button>
+    </div>
+   </header>
+
+   <div className="report-scroll trip-detail-scroll">
+    <article className="trip-sheet">
+     <span className="eyebrow">HISTÓRICO DO VEÍCULO</span>
+     <h1>{vehicle.model} <span className="plate">{vehicle.plate}</span></h1>
+     <p>{departure?.destination||returned?.destination}</p>
+
+     {/* Linha do tempo vertical Saída -> Retorno com estrada tracejada e total com Odometer */}
+     <div className="trip-timeline-card">
+      <div className="trip-timeline-header">
+       <span className="eyebrow">PERCURSO REGISTRADO</span>
+       <span className={'badge '+(trip.status==='completed'?'green':trip.status==='active'?'blue':'amber')}>
+        <i/>
+        {trip.status==='completed'?'Encerrada':trip.status==='active'?'Em uso':'Vínculo incompleto'}
+       </span>
+      </div>
+
+      <div className="trip-odometer-highlight">
+       <span className="trip-odometer-label">DISTÂNCIA TOTAL REGISTRADA</span>
+       <div className="trip-odometer-display">
+        {trip.distance !== null ? (
+         <>
+          <Odometer value={trip.distance}/>
+          <span className="trip-odometer-unit">km</span>
+         </>
+        ) : (
+         <span className="trip-odometer-pending">
+          {trip.status==='active'?'Em percurso na rua':'Aguardando vínculo / retorno'}
+         </span>
+        )}
+       </div>
+      </div>
+
+      <div className="trip-vertical-timeline">
+       {/* Ponto 1: Saída */}
+       <div className="timeline-step step-departure">
+        <div className="timeline-node-pin departure-pin" aria-hidden="true">
+         <ArrowUpRight size={18}/>
+        </div>
+        <div className="timeline-node-body">
+         <div className="timeline-node-header">
+          <span className="timeline-node-tag departure-tag">SAÍDA</span>
+          {departure && <span className="tech-mono timeline-node-time">{dateTime(departure.finishedAt)}</span>}
+         </div>
+
+         {departure ? (
+          <div className="timeline-node-info">
+           <div className="timeline-km-badge">
+            <Gauge size={14}/>
+            <span>Hodômetro de saída:</span>
+            <strong className="tech-mono">{km(departure.odometer)}</strong>
+           </div>
+           <div className="timeline-node-meta">
+            <span>{fuelLabel(departure.fuel)}</span>
+            <span className="meta-sep">·</span>
+            <span>Motorista: {data.drivers.find(d=>d.id===departure.driverId)?.name || 'Não informado'}</span>
+           </div>
+           {departure.destination && (
+            <p className="timeline-destination"><strong>Destino:</strong> {departure.destination}</p>
+           )}
+           <button type="button" className="button secondary small timeline-node-btn" onClick={()=>onInspection(departure)}>
+            <FileText size={14}/> Ver vistoria de saída
+           </button>
+          </div>
+         ) : (
+          <p className="timeline-node-missing">Sem registro vinculado de saída.</p>
+         )}
+        </div>
+       </div>
+
+       {/* Estrada vertical tracejada do hero ligando Saída ao Retorno */}
+       <div className="timeline-road-segment" aria-hidden="true">
+        <div className="timeline-road-track"/>
+        <div className="timeline-road-dashed-line"/>
+       </div>
+
+       {/* Ponto 2: Retorno */}
+       <div className="timeline-step step-return">
+        <div className="timeline-node-pin return-pin" aria-hidden="true">
+         <ArrowDownLeft size={18}/>
+        </div>
+        <div className="timeline-node-body">
+         <div className="timeline-node-header">
+          <span className="timeline-node-tag return-tag">RETORNO</span>
+          {returned ? (
+           <span className="tech-mono timeline-node-time">{dateTime(returned.finishedAt)}</span>
+          ) : (
+           <span className="timeline-status-chip">{trip.status==='active'?'Em andamento':'Pendente'}</span>
+          )}
+         </div>
+
+         {returned ? (
+          <div className="timeline-node-info">
+           <div className="timeline-km-badge">
+            <Gauge size={14}/>
+            <span>Hodômetro de retorno:</span>
+            <strong className="tech-mono">{km(returned.odometer)}</strong>
+           </div>
+           <div className="timeline-node-meta">
+            <span>{fuelLabel(returned.fuel)}</span>
+            <span className="meta-sep">·</span>
+            <span>Motorista: {data.drivers.find(d=>d.id===returned.driverId)?.name || 'Não informado'}</span>
+           </div>
+           {returned.destination && (
+            <p className="timeline-destination"><strong>Destino:</strong> {returned.destination}</p>
+           )}
+           <button type="button" className="button secondary small timeline-node-btn" onClick={()=>onInspection(returned)}>
+            <FileText size={14}/> Ver vistoria de retorno
+           </button>
+          </div>
+         ) : (
+          <p className="timeline-node-missing">
+           {trip.status==='active'?'Veículo ainda em circulação na rua. Retorno não registrado.':'Sem registro vinculado de retorno.'}
+          </p>
+         )}
+        </div>
+       </div>
+      </div>
+     </div>
+
+     {trip.status==='completed'&&<section className={'coherence-card '+(coherence.status==='review_recommended'?'review':'')}><div className="section-heading"><div><span className="eyebrow">COERÊNCIA DA UTILIZAÇÃO</span><h3>{coherence.status==='review_recommended'?'Há dados para conferir':'Nenhum alerta automático relevante'}</h3></div>{coherence.status==='review_recommended'?<AlertTriangle size={21}/>:<MapPin size={21}/>}</div>{coherence.signals.map((signal,index)=><p key={index} className={signal.level==='review'?'fuel-error':''}>{signal.message}</p>)}<small>{coherence.disclaimer}</small></section>}
+     <p className="helper">Encerrar a utilização registra o retorno. Ocorrências de avaliação e reparo continuam acompanhadas separadamente até a conferência final.</p>
+     {(departure?.demo||returned?.demo)&&<div className="demo-banner">Dados demonstrativos. Fotos ilustrativas nos registros identificados como demonstração.</div>}
+     {error&&<div className="error-banner">{error}</div>}
+     {trip.status==='incomplete'&&<div className="info-box"><span>{trip.reason} A distância não entra nos totais até que o vínculo seja conferido.</span></div>}
+     {returned?.linkNote&&<div className="info-box"><span>Vínculo conferido por {returned.linkNote.actor} em {dateTime(returned.linkNote.at)}. {returned.linkNote.note}</span></div>}
+     {trip.status==='incomplete'&&admin&&<TripLinkForm trip={trip} data={data} online={online} onLinked={onLinked}/>}
+     <h2>Checklist comparado</h2><div className="comparison-checklist"><div className="comparison-checklist-head"><strong>Item</strong><strong>Saída</strong><strong>Retorno</strong></div>{CHECKLIST.map(item=><div key={item.id} className={departure&&returned&&departure.answers[item.id]!==returned.answers[item.id]?'changed':''}><span>{item.label}</span><span>{answerLabel(departure?.answers[item.id])}</span><span>{answerLabel(returned?.answers[item.id])}</span></div>)}</div>
+     <h2>Fotos por posição</h2><p className="helper">As imagens são apresentadas lado a lado para conferência humana. A comparação não atribui causa ou responsabilidade por uma avaria.</p><div className="comparison-photo-list">{labels.map(label=><section key={label}><h3>{label}</h3><div className="comparison-columns"><figure><figcaption>Saída</figcaption>{showPhoto(departure,label)}</figure><figure><figcaption>Retorno</figcaption>{showPhoto(returned,label)}</figure></div></section>)}</div>
+     <h2>Ocorrências registradas até a saída</h2>{before.length?before.map(({inspection,finding})=><FindingRow key={inspection.id+finding.id} finding={finding} photos={inspection.photos} onOpen={()=>onFinding(inspection,finding)}/>):<p className="helper">Nenhuma ocorrência anterior encontrada nos registros disponíveis.</p>}
+     <h2>Ocorrências registradas no retorno</h2>{returned?.findings.length?returned.findings.map(f=><FindingRow key={f.id} finding={f} photos={returned.photos} onOpen={()=>onFinding(returned,f)}/>):<p className="helper">Nenhuma ocorrência registrada neste retorno.</p>}
+     <h2>Observações da utilização</h2><div className="comparison-columns"><section><h3>Saída</h3><p className="pre-wrap">{departure?.notes||'Sem observações.'}</p></section><section><h3>Retorno</h3><p className="pre-wrap">{returned?.notes||'Sem observações.'}</p></section></div>
+    </article>
+   </div>
+  </div>
+ );
 }
+
 function FindingRow({finding,photos,onOpen}:{finding:Finding;photos:Photo[];onOpen:()=>void}){return <article className="trip-finding"><div><span className={'badge '+(findingStatus(finding)==='closed'?'green':'amber')}>{FINDING_STATUS_LABELS[findingStatus(finding)]}</span><strong>{finding.area}</strong><p>{finding.description}</p><DamageEvidence finding={finding} photos={photos}/>{finding.events?.map(event=><p className="trip-event" key={event.id}><b>{FINDING_STATUS_LABELS[event.status]}</b> · {dateTime(event.createdAt)} · {event.actor}<br/>{event.note}</p>)}</div><button className="button secondary small" onClick={onOpen}>Ver acompanhamento</button></article>;}
+
 function TripLinkForm({trip,data,online,onLinked}:{trip:VehicleTrip;data:FleetData;online:boolean;onLinked:(value:ConfirmedTripLink)=>Promise<void>}){
  const [departure,setDeparture]=useState(trip.departure?.id||''),[returned,setReturned]=useState(trip.returned?.id||''),[busy,setBusy]=useState(false),[error,setError]=useState('');
  const pairs=buildTrips(data.inspections),departures=data.inspections.filter(i=>i.kind==='departure'&&i.vehicleId===trip.vehicleId&&!pairs.some(t=>t.status==='completed'&&t.departure?.id===i.id)),returns=data.inspections.filter(i=>i.kind==='return'&&i.vehicleId===trip.vehicleId&&!pairs.some(t=>t.status==='completed'&&t.returned?.id===i.id));

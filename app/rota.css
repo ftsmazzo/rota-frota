@@ -3765,3 +3765,596 @@ select,.field select{font-size:15px}
     animation: none !important;
   }
 }
+
+/* ==========================================================================
+   4.7 — DETALHES, MODAIS E WIZARD
+   ========================================================================== */
+
+/* --- 1) Detalhe do Veículo --- */
+.vehicle-detail-hero-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.vehicle-detail-stage {
+  height: 180px;
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  transition: background-color 0.2s ease;
+}
+
+.vehicle-detail-stage.moving {
+  background: var(--stage-move, #eef3f7);
+}
+[data-theme="dark"] .vehicle-detail-stage.moving {
+  background: var(--stage-move, #16242b);
+}
+
+.vehicle-detail-stage.free {
+  background: var(--stage-free, #f1f6e8);
+}
+[data-theme="dark"] .vehicle-detail-stage.free {
+  background: var(--stage-free, #1a2a20);
+}
+
+.vehicle-detail-stage.warn {
+  background: var(--stage-warn, #fbf4e8);
+}
+[data-theme="dark"] .vehicle-detail-stage.warn {
+  background: var(--stage-warn, #2a2219);
+}
+
+.vehicle-detail-car-wrap {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.vehicle-detail-car-wrap svg {
+  width: 240px;
+  max-width: 85%;
+  height: 90px;
+}
+
+.vehicle-stage-bay {
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 210px;
+  height: 18px;
+  z-index: 1;
+}
+.vehicle-stage-bay .bay-line {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--success);
+  opacity: 0.45;
+}
+.vehicle-stage-bay .bay-corner {
+  position: absolute;
+  bottom: 0;
+  width: 2px;
+  height: 16px;
+  background: var(--success);
+  opacity: 0.45;
+}
+.vehicle-stage-bay .bay-corner.left { left: 0; }
+.vehicle-stage-bay .bay-corner.right { right: 0; }
+
+.vehicle-stage-road {
+  position: absolute;
+  bottom: 24px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: repeating-linear-gradient(90deg, var(--info) 0, var(--info) 14px, transparent 14px, transparent 24px);
+  opacity: 0.55;
+  animation: roadDashRun 0.55s linear infinite;
+}
+
+.vehicle-stage-wind {
+  position: absolute;
+  top: 36px;
+  left: 20px;
+  right: 20px;
+  height: 40px;
+  background: repeating-linear-gradient(180deg, transparent 0, transparent 18px, var(--info) 18px, var(--info) 20px);
+  opacity: 0.25;
+  mask-image: linear-gradient(90deg, transparent, black 25%, black 75%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, black 25%, black 75%, transparent);
+}
+
+.vehicle-stage-warn-badge {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--warning);
+  color: white;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 4px 12px rgba(242, 164, 58, 0.35);
+  animation: floatAlert 2.2s ease-in-out infinite;
+  z-index: 3;
+}
+
+@keyframes floatAlert {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(4px); }
+}
+
+.vehicle-detail-header-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+}
+
+.vehicle-detail-brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.vehicle-detail-brand {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  font-family: var(--font-mono, monospace);
+}
+
+.vehicle-detail-meta-pills {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vehicle-detail-unit {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--muted);
+  background: var(--surface-2);
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+}
+
+.vehicle-detail-model {
+  font-size: 28px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+  color: var(--ink);
+  line-height: 1.15;
+  margin: 2px 0 6px !important;
+}
+
+.vehicle-detail-plate-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 4px 0 8px;
+}
+
+.vehicle-detail-odometers {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.v-odometer-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+
+.v-odometer-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  font-family: var(--font-mono, monospace);
+}
+
+.v-odometer-value-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--ink);
+  font-family: var(--font-mono, monospace);
+}
+
+.v-odometer-unit {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+/* --- 2) Detalhe da Utilização (Linha do tempo vertical) --- */
+.trip-timeline-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 24px;
+  margin: 20px 0 28px;
+  box-shadow: var(--shadow);
+}
+
+.trip-timeline-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.trip-odometer-highlight {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px 24px;
+  text-align: center;
+  margin-bottom: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.trip-odometer-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  font-family: var(--font-mono, monospace);
+}
+
+.trip-odometer-display {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+  font-size: 38px;
+  font-weight: 800;
+  color: var(--ink);
+  font-family: var(--font-mono, monospace);
+}
+
+.trip-odometer-unit {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.trip-odometer-pending {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.trip-vertical-timeline {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  padding: 4px 0;
+}
+
+.timeline-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  position: relative;
+  z-index: 2;
+}
+
+.timeline-node-pin {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 2px solid;
+}
+
+.departure-pin {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--brand);
+}
+
+.return-pin {
+  background: var(--info-bg);
+  color: var(--info);
+  border-color: var(--info);
+}
+
+.timeline-node-body {
+  flex: 1;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.timeline-node-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.timeline-node-tag {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.departure-tag {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.return-tag {
+  background: var(--info-bg);
+  color: var(--info);
+}
+
+.timeline-node-time {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.timeline-km-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.timeline-km-badge strong {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.timeline-node-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+  flex-wrap: wrap;
+}
+
+.timeline-destination {
+  font-size: 13px;
+  color: var(--ink);
+  line-height: 1.5;
+  margin: 2px 0;
+}
+
+.timeline-node-btn {
+  align-self: flex-start;
+  margin-top: 4px;
+}
+
+.timeline-node-missing {
+  font-size: 13px;
+  color: var(--muted);
+  font-style: italic;
+  margin: 0;
+}
+
+.timeline-road-segment {
+  position: relative;
+  width: 44px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  margin: -2px 0;
+}
+
+.timeline-road-track {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 22px;
+  background: rgba(85, 122, 100, 0.18);
+  border-radius: 11px;
+}
+
+.timeline-road-dashed-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  background: repeating-linear-gradient(180deg, var(--accent) 0, var(--accent) 8px, transparent 8px, transparent 15px);
+  animation: roadDashVertical 1.2s linear infinite;
+}
+
+@keyframes roadDashVertical {
+  from { background-position: 0 0; }
+  to { background-position: 0 23px; }
+}
+
+/* --- 3) Modais (Desktop centro escala .96 -> 1) --- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(11, 26, 20, 0.6);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
+  width: 680px;
+  max-width: 100%;
+  max-height: calc(100vh - 48px);
+  max-height: calc(100dvh - 48px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform-origin: center center;
+  animation: modalDesktopEnter 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes modalDesktopEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.modal-drag-handle {
+  display: none;
+}
+
+.modal > header {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  padding: 18px 24px;
+  background: var(--surface);
+  z-index: 2;
+  flex-shrink: 0;
+}
+
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}
+
+/* --- 4) Wizard Topo Refinado --- */
+.wizard-header {
+  height: 72px;
+  padding: 0 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.wizard-header-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 240px;
+  flex: 1;
+  max-width: 360px;
+}
+
+.wizard-progress-labels {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.wizard-step-counter {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+}
+
+.wizard-progress-sep {
+  color: var(--border);
+}
+
+.wizard-step-active-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.wizard-header-fixed-plate {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.wizard-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.wizard-progress-mobile {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal,
+  .vehicle-stage-warn-badge,
+  .timeline-road-dashed-line,
+  .vehicle-stage-road {
+    animation: none !important;
+  }
+}

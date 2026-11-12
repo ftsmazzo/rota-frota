@@ -7,6 +7,8 @@ export interface StatusBarProps {
   height?: number | string;
   className?: string;
   style?: React.CSSProperties;
+  totalSegments?: number;
+  activeSegment?: number;
 }
 
 export function StatusBar({
@@ -16,8 +18,45 @@ export function StatusBar({
   height = 8,
   className = "",
   style,
+  totalSegments,
+  activeSegment = 0,
 }: StatusBarProps) {
   const h = typeof height === "number" ? `${height}px` : height;
+
+  if (totalSegments && totalSegments > 0) {
+    return (
+      <div
+        className={`live-status-bar wizard-status-bar ${className}`.trim()}
+        role="progressbar"
+        aria-label={`Etapa ${activeSegment + 1} de ${totalSegments}`}
+        style={{
+          display: "flex",
+          height: h,
+          gap: 4,
+          width: "100%",
+          borderRadius: typeof height === "number" ? Math.max(2, Math.round(height / 2)) : 4,
+          overflow: "hidden",
+          ...style,
+        }}
+      >
+        {Array.from({ length: totalSegments }).map((_, idx) => (
+          <div
+            key={idx}
+            className={`live-status-segment wizard-seg ${idx <= activeSegment ? "active" : ""}`}
+            style={{
+              flex: 1,
+              height: "100%",
+              borderRadius: 2,
+              background: idx <= activeSegment ? "var(--accent)" : "var(--border)",
+              opacity: idx <= activeSegment ? 1 : 0.45,
+              transition: "background 0.25s ease, opacity 0.25s ease",
+            }}
+          />
+        ))}
+      </div>
+    );
+  }
+
   const isAllZero = available === 0 && out === 0 && attention === 0;
 
   return (
