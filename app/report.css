@@ -35,3 +35,18 @@
 
 .wizard-steps{position:sticky;top:77px;align-self:start;height:calc(100vh - 77px)}.discard-draft{font-size:12px;color:var(--muted);margin:0 0 15px}
 .recent-panel,.table-panel,.overview-bottom,.reports-grid,.team-grid{min-width:0}.table-scroll{max-width:100%;width:100%}
+
+@media (max-width: 760px) {
+  .vehicle-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+  .vehicle-card {
+    padding: 12px !important;
+    border-radius: 22px !important;
+    gap: 10px !important;
+  }
+  .overview-fleet .vehicle-card:last-child {
+    display: flex !important;
+  }
+}

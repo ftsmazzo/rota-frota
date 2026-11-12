@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono, Barlow_Condensed } from "next/font/google";
 import "./rota.css";
 import "./report.css";
 import "./auth.css";
@@ -19,6 +19,13 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-mono",
+});
+
+const barlowCondensed = Barlow_Condensed({
+  subsets: ["latin"],
+  weight: ["600"],
+  display: "swap",
+  variable: "--font-plate",
 });
 
 export const viewport: Viewport = {
@@ -58,7 +65,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${inter.className} ${inter.variable} ${jetbrainsMono.variable} antialiased`}>{children}<PwaUpdater/></body>
+      <body className={`${inter.className} ${inter.variable} ${jetbrainsMono.variable} ${barlowCondensed.variable} antialiased`}>{children}<PwaUpdater/></body>
     </html>
   );
 }
