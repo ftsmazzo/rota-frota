@@ -717,3 +717,458 @@ select,.field select{font-size:15px}
     animation: roadGlowFollow 6s ease-in-out infinite;
   }
 }
+
+/* ==========================================================================
+   LiveHero (Hero da Visão Geral ao Vivo - Artboard A)
+   ========================================================================== */
+
+:root {
+  --live-secondary: #c9d8c4;
+}
+
+[data-theme="dark"] {
+  --live-secondary: #a9bdb0;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --live-secondary: #a9bdb0;
+  }
+}
+
+.live-hero {
+  position: relative;
+  background: var(--brand);
+  border-radius: 28px;
+  padding: 22px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow: hidden;
+  color: #f4f7f1;
+  box-sizing: border-box;
+  animation: liveCardEnter 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+[data-theme="dark"] .live-hero {
+  background: #132a21;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .live-hero {
+    background: #132a21;
+  }
+}
+
+/* 1) Top line */
+.live-hero-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.live-top-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: liveDotPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.live-total-vehicles {
+  font-family: var(--font-mono, monospace);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--live-secondary);
+}
+
+/* 2) Main content layout & Title */
+.live-hero-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.live-hero-title {
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  color: #f4f7f1;
+  margin: 0;
+}
+
+/* 3 & 4) Estrada animada + Viajantes */
+.live-road-section {
+  width: 100%;
+  position: relative;
+}
+
+.live-road-bleed {
+  margin-left: -20px;
+  margin-right: -20px;
+  width: calc(100% + 40px);
+  height: 170px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.live-road-stage {
+  position: relative;
+  width: 400px;
+  height: 170px;
+  flex-shrink: 0;
+}
+
+.live-road-svg {
+  position: absolute;
+  inset: 0;
+  width: 400px;
+  height: 170px;
+  display: block;
+}
+
+.live-road-dashed {
+  animation: liveDashAnim 1.2s linear infinite;
+}
+
+.live-base-tag {
+  position: absolute;
+  left: 28px;
+  bottom: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--live-secondary);
+  pointer-events: none;
+  z-index: 2;
+  letter-spacing: 0.02em;
+}
+
+.live-traveler-chip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--surface);
+  color: var(--ink);
+  padding: 3px 8px 3px 3px;
+  border-radius: 999px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.28);
+  font-size: 11px;
+  font-weight: 600;
+  pointer-events: none;
+  z-index: 3;
+  offset-path: path("M-10 150 C 50 150, 70 70, 140 78 S 230 140, 330 30 S 380 10, 400 8");
+  -webkit-offset-path: path("M-10 150 C 50 150, 70 70, 140 78 S 230 140, 330 30 S 380 10, 400 8");
+  offset-rotate: 0deg;
+  animation: liveTravelerAnim var(--travel-duration, 10s) linear infinite;
+  animation-delay: var(--travel-delay, 0s);
+  will-change: offset-distance, transform, opacity;
+}
+
+.live-traveler-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.live-traveler-model {
+  color: var(--ink);
+  line-height: 1;
+}
+
+/* 5) Status bar + Legend */
+.live-status-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.live-status-bar {
+  display: flex;
+  height: 8px;
+  gap: 4px;
+  width: 100%;
+  border-radius: 4px;
+  overflow: hidden;
+  transform-origin: left;
+  animation: liveBarGrow 800ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.live-status-segment {
+  height: 100%;
+  border-radius: 2px;
+  min-width: 4px;
+}
+
+.live-status-segment.available {
+  background: var(--accent);
+}
+
+.live-status-segment.out {
+  background: #8db4d1;
+}
+
+.live-status-segment.attention {
+  background: #e0a965;
+}
+
+.live-status-legend {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.live-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.live-legend-num {
+  font-family: var(--font-mono, monospace);
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  font-weight: 700;
+  color: #f4f7f1;
+}
+
+.live-legend-label {
+  font-size: 12px;
+  color: var(--live-secondary);
+}
+
+/* 6) CTA Button */
+.live-hero-cta {
+  width: 100%;
+  height: 54px;
+  min-height: 54px;
+  border-radius: 16px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.18s ease, filter 0.18s ease, box-shadow 0.18s ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+}
+
+.live-hero-cta:hover {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
+
+.live-hero-cta:active {
+  transform: translateY(1px);
+}
+
+/* 7) Footer with thin border */
+.live-hero-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  padding-top: 12px;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--live-secondary);
+  min-height: 32px;
+  overflow: hidden;
+}
+
+.live-footer-clock {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.live-footer-ticker {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.live-ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  animation: liveTickerFade 400ms ease both;
+}
+
+.live-ticker-dot {
+  opacity: 0.6;
+}
+
+.live-ticker-time {
+  font-family: var(--font-mono, monospace);
+  font-variant-numeric: tabular-nums;
+  color: #f4f7f1;
+}
+
+.live-ticker-empty {
+  color: var(--live-secondary);
+  font-style: italic;
+}
+
+/* Desktop composition: road occupying the right half */
+@media (min-width: 761px) {
+  .live-hero-content {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(320px, 1fr);
+    grid-template-rows: auto auto auto;
+    gap: 16px 20px;
+    align-items: center;
+  }
+  .live-hero-title {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .live-status-group {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .live-hero-cta {
+    grid-column: 1;
+    grid-row: 3;
+    width: 100%;
+  }
+  .live-road-section {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    align-self: center;
+  }
+  .live-road-bleed {
+    margin: 0;
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+/* Keyframe animations */
+@keyframes liveCardEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes liveDotPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(191, 233, 83, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 7px rgba(191, 233, 83, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(191, 233, 83, 0);
+  }
+}
+
+@keyframes liveDashAnim {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: -15;
+  }
+}
+
+@keyframes liveTravelerAnim {
+  0% {
+    offset-distance: 0%;
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  4% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  94% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+    transform: scale(0.85);
+  }
+}
+
+@keyframes liveBarGrow {
+  0% {
+    transform: scaleX(0);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes liveTickerFade {
+  0% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-hero,
+  .live-dot,
+  .live-road-dashed,
+  .live-traveler-chip,
+  .live-status-bar,
+  .live-ticker-item {
+    animation: none !important;
+    transform: none !important;
+  }
+  .live-status-bar {
+    transform: scaleX(1) !important;
+  }
+  .live-traveler-chip {
+    opacity: 1 !important;
+    offset-distance: 50% !important;
+  }
+  .live-ticker-item {
+    opacity: 1 !important;
+  }
+}
