@@ -9,6 +9,8 @@ import {loadLocal,saveLocal,syncInspection,syncRefueling,deleteAudioClip,type Lo
 import {CarIllustration} from "./visuals";
 import {VehicleCard} from "./vehicle-card";
 import {ThemeToggle} from "./theme-toggle";
+import {InspectionCard} from "./inspection-card";
+import {ReportCard} from "./report-card";
 import {Report,PhotoView} from "./report";
 import {Avatar,Badge,Modal,SearchBox} from "./common";
 import {UserManager,ChangePassword} from "./user-manager";
@@ -52,8 +54,43 @@ export default function FleetApp({user,onLogout}:{user:AppUser;onLogout:()=>Prom
  async function finish(inspection:Inspection){const clips=current.current.draft?.voiceClips||[];if(await persist({...current.current,draft:undefined,data:{...current.current.data,inspections:[inspection,...current.current.data.inspections]}})){void Promise.allSettled(clips.map(clip=>deleteAudioClip(clip.id)));setWizard(false);notify(inspection.demo?"Exemplo salvo neste aparelho.":"Vistoria salva no aparelho. O envio será confirmado pelo sistema.");setTripId(inspection.previousId||inspection.id);void synchronize()}}
  const fleet=data.vehicles.filter(v=>(filter==="all"||(filter==="attention"?vehicleNeedsAttention(v.id,data.inspections):getVehicleState(v,data.inspections)===filter))&&[v.model,v.plate,v.unit].join(" ").toLowerCase().includes(search.toLowerCase()));
  const inspections=sorted.filter(i=>{const v=data.vehicles.find(v=>v.id===i.vehicleId),d=data.drivers.find(d=>d.id===i.driverId);return(filter==="all"||filter==="issues"&&i.findings.length>0||filter==="pending"&&i.pending||i.kind===filter)&&[v?.model,v?.plate,d?.name,i.destination].join(" ").toLowerCase().includes(search.toLowerCase())});
- function vehicleCard(v:Vehicle,index:number){return <VehicleCard key={v.id} vehicle={v} inspections={sorted} drivers={data.drivers} index={index} onOpenDetail={setVehicleDetail} onStartInspection={startInspection} getVehicleState={getVehicleState} vehicleNeedsAttention={vehicleNeedsAttention}/>;}
- function table(rows:Inspection[]){return <div className="table-scroll"><table className="inspection-table"><thead><tr><th>VEÍCULO</th><th>MOTORISTA</th><th>OPERAÇÃO</th><th>DATA E HORA</th><th>REGISTRO</th><th/></tr></thead><tbody>{rows.map(i=>{const v=data.vehicles.find(v=>v.id===i.vehicleId),driver=data.drivers.find(d=>d.id===i.driverId);return <tr key={i.id}><td><div className="table-car"><span><CarFront size={19}/></span><div><strong>{v?.model}</strong><small>{v?.plate}</small></div></div></td><td><div className="driver-line"><Avatar driver={driver} small/>{driver?.name}</div></td><td><span className={"operation "+i.kind}>{i.kind==="departure"?<ArrowUpRight size={14}/>:<ArrowLeft size={14}/>} {i.kind==="departure"?"Saída":"Retorno"}</span></td><td><strong>{shortDate(i.finishedAt)}</strong><small>{new Date(i.finishedAt).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}</small></td><td><span className={"badge "+(i.pending||i.findings.length?"amber":"green")}>{i.pending?"Envio pendente":i.findings.length?i.findings.length+" apontamento"+(i.findings.length>1?"s":""):"Conferido"}</span></td><td><button className="icon-button" aria-label={"Abrir relatório "+inspectionCode(i.id)} onClick={()=>setReport(i)}><FileText size={18}/></button></td></tr>})}</tbody></table>{!rows.length&&<div className="empty-state"><strong>Nenhum registro encontrado</strong><p>Experimente outra busca ou registre uma nova vistoria.</p></div>}</div>}
+ async function handleDownloadReport(e: React.MouseEvent, i: Inspection) {
+  e.stopPropagation();
+  notify("Gerando PDF da vistoria…");
+  try {
+    const { downloadReport } = await import("../lib/pdf");
+    await downloadReport(i, data);
+  } catch {
+    notify("Não foi possível gerar o PDF. Tente novamente.");
+  }
+}
+function vehicleCard(v:Vehicle,index:number){return <VehicleCard key={v.id} vehicle={v} inspections={sorted} drivers={data.drivers} index={index} onOpenDetail={setVehicleDetail} onStartInspection={startInspection} getVehicleState={getVehicleState} vehicleNeedsAttention={vehicleNeedsAttention}/>;}
+ function table(rows:Inspection[]){
+  return (
+    <div className="inspection-card-list">
+      {rows.map((i, index) => {
+        const v = data.vehicles.find(v => v.id === i.vehicleId);
+        const driver = data.drivers.find(d => d.id === i.driverId);
+        return (
+          <InspectionCard
+            key={i.id}
+            inspection={i}
+            vehicle={v}
+            driver={driver}
+            index={index}
+            onOpen={() => setReport(i)}
+          />
+        );
+      })}
+      {!rows.length && (
+        <div className="empty-state">
+          <strong>Nenhum registro encontrado</strong>
+          <p>Experimente outra busca ou registre uma nova vistoria.</p>
+        </div>
+      )}
+    </div>
+  );
+}
  if(!loaded)return <div className="app-shell"><div className="main-shell" style={{marginLeft:0}}><header className="topbar"><div className="breadcrumb"><span className="brand-mark" style={{width:28,height:28,fontSize:24}}>r</span><strong>Preparando sua frota…</strong><LoaderCircle className="spin" size={16}/></div></header><main className="main-content"><div className="stats-grid">{[1,2,3,4].map(k=><div key={k} className="stat-card skeleton-card"><div className="skeleton-line" style={{width:"55%",height:13}}/><div className="skeleton-line" style={{width:"35%",height:28,margin:"10px 0"}}/><div className="skeleton-line" style={{width:"75%",height:12}}/></div>)}</div><div className="vehicle-grid">{[1,2,3].map(k=><div key={k} className="vehicle-card skeleton-card"><div className="skeleton-line" style={{width:"30%",height:13}}/><div className="skeleton-box" style={{height:92,margin:"12px 0"}}/><div className="skeleton-line" style={{width:"65%",height:16}}/><div className="skeleton-line" style={{width:"45%",height:13,margin:"8px 0 14px"}}/></div>)}</div></main></div></div>;
  return <div className="app-shell"><aside className={"sidebar " + (mobile ? "open" : "")}>
         <div className="sidebar-anim-item" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
@@ -323,7 +360,58 @@ export default function FleetApp({user,onLogout}:{user:AppUser;onLogout:()=>Prom
  <div className="stats-grid">{[{icon:CarFront,label:"Veículos na frota",value:data.vehicles.length,sub:"Sua operação em um só lugar",status:"all",color:"neutral"},{icon:CheckCircle2,label:"Disponíveis",value:counts.available,sub:"Prontos para a próxima saída",status:"available",color:"green"},{icon:Route,label:"Em uso",value:counts.out,sub:"Em atividades com a equipe",status:"out",color:"blue"},{icon:AlertTriangle,label:"Precisam de atenção",value:counts.attention,sub:"Confira antes de liberar",status:"attention",color:"amber"}].map(s=><button className="stat-card" key={s.label} onClick={()=>navigate("fleet",s.status)}><div><span>{s.label}</span><span className={"stat-icon "+s.color}><s.icon size={18}/></span></div><strong><CountUp value={String(s.value).padStart(2,"0")}/></strong><small><i className={s.color}/>{s.sub}</small></button>)}</div>
  <div className="section-heading"><div><h2>De olho na frota</h2><span>Disponibilidade e condições dos veículos</span></div><button className="text-button" onClick={()=>navigate("fleet")}>Ver todos os veículos <ArrowRight size={15}/></button></div><div className="vehicle-grid overview-fleet">{data.vehicles.slice(0,3).map(vehicleCard)}</div><div className="overview-bottom"><section className="recent-panel"><div className="section-heading"><div><h2>Últimas vistorias</h2><span>Os registros mais recentes da operação</span></div><button className="icon-button" aria-label="Ver todas as vistorias" onClick={()=>navigate("inspections")}><ArrowUpRight size={19}/></button></div>{table(sorted.slice(0,4))}</section><aside className="attention-panel"><div className="attention-title"><span><Activity size={19}/></span><h2>Para acompanhar</h2></div>{pendingFindings.slice(0,2).map(({i,f})=><button className="attention-item" key={i.id+f.id} onClick={()=>openFindingReview(i,f)}><span className={"attention-dot "+f.severity}/><div><small>{data.vehicles.find(v=>v.id===i.vehicleId)?.model}</small><strong>{f.area}</strong><p>{f.description}</p><span>Acompanhar ocorrência <ArrowUpRight size={12}/></span></div></button>)}{!pendingFindings.length&&<p className="helper">Nenhum apontamento pendente.</p>}<div className="attention-note"><ShieldCheck size={17}/><span>O cuidado diário mantém a operação em movimento.</span></div></aside></div></>}
  {view==="fleet"&&<><div className="content-toolbar"><div className="tabs-wrap"><div className="tabs">{[["all","Todos",data.vehicles.length],["available","Disponíveis",counts.available],["out","Em uso",counts.out],["attention","Atenção",counts.attention]].map(([key,label,count])=><button key={key} className={filter===key?"selected":""} onClick={()=>setFilter(String(key))}>{label}<span>{count}</span></button>)}</div></div><button className="button secondary" onClick={()=>setCatalog("vehicle")} disabled={!online||user.role!=="admin"}><Plus size={15}/> Adicionar veículo</button></div><SearchBox value={search} onChange={setSearch} placeholder="Buscar veículo, placa..."/><div className="vehicle-grid full-fleet">{fleet.map(vehicleCard)}</div>{!fleet.length&&<div className="empty-state"><strong>Nenhum veículo encontrado.</strong></div>}</>}
- {(view==="inspections"||view==="reports")&&<><div className="content-toolbar"><div className="tabs-wrap"><div className="tabs">{[["all","Todos"],["departure","Saídas"],["return","Retornos"],["issues","Com apontamentos"],["pending","Envios pendentes"]].map(([id,label])=><button key={id} className={filter===id?"selected":""} onClick={()=>setFilter(id)}>{label}{id==="pending"&&pending>0&&<span>{pending}</span>}</button>)}</div></div><button className="button secondary" disabled={!online||syncBusy} onClick={()=>synchronize()}><RefreshCw size={15} className={syncBusy?"spin":""}/> Atualizar</button></div><SearchBox value={search} onChange={setSearch} placeholder="Buscar veículo, placa..."/>{view==="inspections"?<section className="table-panel">{table(inspections)}</section>:<div className="reports-grid">{inspections.map(i=>{const v=data.vehicles.find(v=>v.id===i.vehicleId)!;return <article className="report-card" key={i.id}><div className="mini-report"><div><span className="mini-logo">rota.</span><small>{inspectionCode(i.id)}</small></div><span>RELATÓRIO DE VISTORIA</span><strong>{v.model}</strong><div className="mini-lines"><i/><i/><i/></div><div className="mini-photo-row">{i.photos.slice(0,3).map(p=><PhotoView key={p.id} photo={p}/>)}</div><div className="mini-lines short"><i/><i/></div></div><div className="report-card-copy"><span className={"operation "+i.kind}>{i.kind==="departure"?"Saída":"Retorno"} · {shortDate(i.finishedAt)}</span><h3>{v.model}</h3><p>{v.plate} · {i.photos.length} fotos</p><button className="button secondary" onClick={()=>setReport(i)}>Abrir relatório <ArrowUpRight size={16}/></button></div></article>})}</div>}</>}
+ {(view==="inspections"||view==="reports")&&<>
+  <div className="content-toolbar">
+    <div className="tabs-wrap">
+      <div className="tabs">
+        {[["all","Todos"],["departure","Saídas"],["return","Retornos"],["issues","Com apontamentos"],["pending","Envios pendentes"]].map(([id,label])=>(
+          <button key={id} className={filter===id?"selected":""} onClick={()=>setFilter(id)}>
+            {label}
+            {id==="pending"&&pending>0&&(
+              <span className="tab-pending-chip">
+                <LiveDot color="var(--warning)" />
+                <span>{pending}</span>
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+    </div>
+    <button className="button secondary" disabled={!online||syncBusy} onClick={()=>synchronize()}>
+      <RefreshCw size={15} className={syncBusy?"spin":""}/> Atualizar
+    </button>
+  </div>
+  <SearchBox value={search} onChange={setSearch} placeholder="Buscar veículo, placa..."/>
+  {view==="inspections" ? (
+    <section className="inspections-panel">
+      {table(inspections)}
+    </section>
+  ) : (
+    <div className="reports-grid">
+      {inspections.map((i, index) => {
+        const v = data.vehicles.find(v => v.id === i.vehicleId);
+        const driver = data.drivers.find(d => d.id === i.driverId);
+        return (
+          <ReportCard
+            key={i.id}
+            inspection={i}
+            vehicle={v}
+            driver={driver}
+            index={index}
+            onOpen={() => setReport(i)}
+            onDownload={handleDownloadReport}
+          />
+        );
+      })}
+      {!inspections.length && (
+        <div className="empty-state">
+          <strong>Nenhum relatório encontrado</strong>
+          <p>Experimente outra busca ou registre uma nova vistoria.</p>
+        </div>
+      )}
+    </div>
+  )}
+</>}
  {view==='fuel'&&<FuelPanel data={data} onAdd={startRefueling} admin={user.role==='admin'} online={online} onUpdated={updateRefueling}/>}
  {fuelOpen&&local.refuelingDraft&&<RefuelingForm draft={local.refuelingDraft} data={data} aiReady={aiReady} storageError={storageError} onChange={async draft=>{if(current.current.refuelingDraft?.id!==draft.id)return false;return persist({...current.current,refuelingDraft:draft});}} onClose={()=>setFuelOpen(false)} onSave={async value=>{const clips=current.current.refuelingDraft?.voiceClips||[];if(await persist({...current.current,refuelingDraft:undefined,data:{...current.current.data,refuelings:[value,...(current.current.data.refuelings||[]).filter(r=>r.id!==value.id)]}})){void Promise.allSettled(clips.map(clip=>deleteAudioClip(clip.id)));setFuelOpen(false);setView('fuel');notify('Abastecimento salvo no aparelho. Aguarde a confirmação do envio.');void synchronize();}else throw Error('Não foi possível salvar no aparelho.');}}/>}
  {view==="trips"&&<TripsPanel data={data} onOpen={setTripId}/>}

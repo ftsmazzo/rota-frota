@@ -2004,3 +2004,1027 @@ select,.field select{font-size:15px}
     animation: none !important;
   }
 }
+
+/* -------------------------------------------------------------
+   4.2 — Painel de Abastecimentos (FuelPanel)
+   ------------------------------------------------------------- */
+.fuel-metrics-block {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.fuel-card-spent {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  box-shadow: var(--shadow);
+  padding: 20px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.fuel-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.fuel-metric-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  box-shadow: var(--shadow);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-sizing: border-box;
+  min-height: 136px;
+  justify-content: space-between;
+}
+
+.fuel-metric-card-full {
+  grid-column: 1 / -1;
+}
+
+.fuel-metric-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.fuel-metric-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fuel-metric-badge-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: var(--success-bg);
+  color: var(--success);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fuel-metric-value-wrap {
+  display: flex;
+  align-items: baseline;
+  line-height: 1;
+}
+
+.fuel-metric-value-40 {
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+}
+
+.fuel-metric-unit {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-left: 6px;
+  letter-spacing: 0;
+}
+
+.fuel-metric-currency {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-right: 4px;
+  letter-spacing: 0;
+}
+
+.fuel-metric-decimals {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: -0.02em;
+}
+
+.fuel-metric-sub {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Indicador sem dados / gota pulsando */
+.fuel-metric-empty-block {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.fuel-drop-pulse {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--warning-bg);
+  color: var(--warning);
+  flex-shrink: 0;
+  animation: fuelDropPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes fuelDropPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.14);
+    opacity: 0.5;
+  }
+}
+
+.fuel-metric-empty-text {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* Estado vazio da página */
+.fuel-page-empty {
+  padding: 56px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  box-shadow: var(--shadow);
+  margin: 20px 0;
+}
+
+.fuel-pump-illustration {
+  width: 130px;
+  height: 130px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@keyframes fuelDropFall {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  75% {
+    transform: translateY(18px);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+
+.fuel-empty-drop-anim {
+  animation: fuelDropFall 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.fuel-page-empty h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.fuel-page-empty p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+  max-width: 440px;
+  line-height: 1.55;
+}
+
+/* Lista e cards de abastecimento */
+.fuel-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.fuel-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s, border-color 0.2s;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.fuel-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px -2px rgba(0, 0, 0, 0.08);
+  border-color: var(--accent);
+}
+
+[data-theme="dark"] .fuel-card:hover {
+  box-shadow: 0 6px 16px -2px rgba(0, 0, 0, 0.35);
+}
+
+.fuel-card.voided {
+  opacity: 0.6;
+  border-style: dashed;
+}
+
+.fuel-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.fuel-card-vehicle-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.fuel-card-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.fuel-card-brand {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  line-height: 1;
+}
+
+.fuel-card-model {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  line-height: 1.15;
+}
+
+.fuel-card-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* Chips de Combustível com contraste AA */
+.fuel-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+}
+
+.fuel-chip-gasoline {
+  background: #e2ebf4;
+  color: #123c60;
+}
+[data-theme="dark"] .fuel-chip-gasoline {
+  background: #15293d;
+  color: #97c5f2;
+}
+
+.fuel-chip-ethanol {
+  background: #e3f2e4;
+  color: #114b1b;
+}
+[data-theme="dark"] .fuel-chip-ethanol {
+  background: #132c18;
+  color: #8de59d;
+}
+
+.fuel-chip-diesel {
+  background: #faebd9;
+  color: #6e3906;
+}
+[data-theme="dark"] .fuel-chip-diesel {
+  background: #332212;
+  color: #f5b66d;
+}
+
+.fuel-chip-mixed {
+  background: #eee8f7;
+  color: #4a2c75;
+}
+[data-theme="dark"] .fuel-chip-mixed {
+  background: #251838;
+  color: #cbb4f2;
+}
+
+.fuel-tag-voided {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--warning-bg);
+  color: var(--warning);
+  text-decoration: line-through;
+}
+
+.fuel-card-middle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 4px 0;
+}
+
+.fuel-card-station {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.fuel-card-station svg {
+  color: var(--muted);
+}
+
+.fuel-card-driver {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.fuel-card-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--surface);
+}
+
+.fuel-card-driver-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.fuel-card-bottom {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  margin-top: 2px;
+}
+
+.fuel-card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fuel-card-date {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.fuel-card-tech {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.fuel-card-values {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  text-align: right;
+}
+
+.fuel-card-liters {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.fuel-card-price {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+
+.fuel-card-arrow {
+  color: var(--muted);
+  transition: transform 0.2s;
+  display: flex;
+  align-items: center;
+  margin-left: 4px;
+}
+
+.fuel-card:hover .fuel-card-arrow {
+  transform: translate(2px, -2px);
+  color: var(--accent);
+}
+
+@media (max-width: 760px) {
+  .fuel-card-spent {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+  .fuel-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+  .fuel-card-top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .fuel-card-bottom {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .fuel-card-values {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fuel-drop-pulse,
+  .fuel-empty-drop-anim {
+    animation: none !important;
+  }
+  .fuel-card:hover {
+    transform: none !important;
+  }
+  .fuel-card:hover .fuel-card-arrow {
+    transform: none !important;
+  }
+}
+
+/* ==========================================================================
+   4.3 — VISTORIAS E RELATÓRIOS
+   ========================================================================== */
+
+/* 1) Selos de operação com seta animada e cores temáticas */
+.operation-seal {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+.operation-seal.departure {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.operation-seal.return {
+  background: var(--info-bg);
+  color: var(--info);
+  border: 1px solid var(--info-bg);
+}
+
+[data-theme="dark"] .operation-seal.return {
+  background: var(--info-bg);
+  color: var(--info);
+  border-color: rgba(141, 180, 209, 0.25);
+}
+
+/* Seta ArrowUpRight que desliza 2px em loop lento */
+@keyframes arrowSlideSlow {
+  0%, 100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(2px, -2px);
+  }
+}
+
+.arrow-sliding {
+  animation: arrowSlideSlow 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arrow-sliding {
+    animation: none !important;
+  }
+}
+
+/* 2) Chip âmbar "Com apontamento" com LiveDot */
+.chip-issue {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 4px 9px;
+  border-radius: 9999px;
+  background: var(--warning-bg);
+  color: var(--warning);
+  border: 1px solid var(--warning);
+  white-space: nowrap;
+}
+
+[data-theme="dark"] .chip-issue {
+  background: var(--warning-bg);
+  color: var(--warning);
+  border-color: rgba(224, 169, 101, 0.4);
+}
+
+/* 3) Filtro "Envios pendentes" com chip, contador e LiveDot âmbar */
+.tab-pending-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  background: var(--warning-bg);
+  color: var(--warning);
+  border: 1px solid var(--warning);
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-mono, monospace);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  margin-left: 4px;
+}
+
+[data-theme="dark"] .tab-pending-chip {
+  border-color: rgba(224, 169, 101, 0.45);
+}
+
+.tabs button.selected .tab-pending-chip {
+  background: var(--warning);
+  color: #ffffff;
+  border-color: var(--warning);
+}
+
+/* 4) Lista de Vistorias (inspection-card-list / inspection-card) */
+.inspections-panel {
+  width: 100%;
+}
+
+.inspection-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.inspection-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+  box-sizing: border-box;
+  position: relative;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+.inspection-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+  border-color: var(--accent);
+}
+
+.inspection-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.inspection-card-vehicle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.inspection-card-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.inspection-card-brand {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  line-height: 1;
+}
+
+.inspection-card-model {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  line-height: 1.15;
+}
+
+.inspection-card-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.inspection-card-middle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 2px;
+}
+
+.inspection-driver-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.inspection-card-meta-tags {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.inspection-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--muted);
+  background: var(--surface-2);
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.inspection-photos-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  padding: 2px 7px;
+  border-radius: 9999px;
+  font-family: var(--font-mono, monospace);
+  font-variant-numeric: tabular-nums;
+}
+
+.inspection-card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  margin-top: 2px;
+  flex-wrap: wrap;
+}
+
+.inspection-card-tech {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.inspection-card-odometer {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.inspection-card-action {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--brand);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+[data-theme="dark"] .inspection-card-action {
+  color: var(--accent);
+}
+
+.inspection-card:hover .inspection-card-action svg {
+  transform: translate(2px, -2px);
+}
+
+/* 5) Relatórios com inclinação 3D, botão redondo de download com fade e chip de fotos */
+.reports-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.report-card {
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow);
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s ease, border-color 0.22s ease;
+  position: relative;
+}
+
+.report-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+  border-color: var(--accent);
+}
+
+.report-preview-wrap {
+  position: relative;
+  perspective: 800px;
+  overflow: hidden;
+  padding-bottom: 6px;
+}
+
+.mini-report {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  margin: 18px 24px 0;
+  padding: 16px 14px 0;
+  height: 180px;
+  overflow: hidden;
+  transform: rotate(-2deg);
+  transform-origin: bottom center;
+  transform-style: preserve-3d;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.report-card:nth-child(2n) .mini-report {
+  transform: rotate(2deg);
+}
+
+/* Leve inclinação 3D no hover/toque (rotateX/rotateY até 4deg, perspective 800px) */
+.report-card:hover .mini-report,
+.report-card:active .mini-report {
+  transform: perspective(800px) rotateX(4deg) rotateY(-3deg) translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+
+.report-card:nth-child(2n):hover .mini-report,
+.report-card:nth-child(2n):active .mini-report {
+  transform: perspective(800px) rotateX(4deg) rotateY(3deg) translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+
+/* Botão redondo de download que aparece com fade */
+.report-round-download {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.15s, color 0.15s;
+  z-index: 5;
+}
+
+.report-round-download:hover {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
+  transform: scale(1.06);
+}
+
+.report-card:hover .report-round-download,
+.report-card:focus-within .report-round-download {
+  opacity: 1;
+  transform: scale(1);
+}
+
+@media (hover: none) {
+  .report-round-download {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.report-card-copy {
+  position: relative;
+  border-top: 1px solid var(--border);
+  padding: 16px 18px;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.report-card-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.report-card-vehicle-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.report-card-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.report-card-brand {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  line-height: 1;
+}
+
+.report-card-model {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  line-height: 1.15;
+}
+
+.report-card-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: -2px;
+}
+
+.report-photos-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  padding: 3px 8px;
+  font-family: var(--font-mono, monospace);
+  font-variant-numeric: tabular-nums;
+}
+
+.report-date {
+  font-size: 12px;
+  color: var(--muted);
+  font-family: var(--font-mono, monospace);
+  font-variant-numeric: tabular-nums;
+}
+
+.report-open-btn {
+  width: 100%;
+  margin-top: 4px;
+}
+
+/* Responsividade Mobile (<= 760px) */
+@media (max-width: 760px) {
+  .inspection-card {
+    padding: 14px 14px;
+    border-radius: 16px;
+    gap: 10px;
+  }
+  .inspection-card-top {
+    gap: 8px;
+  }
+  .inspection-card-vehicle {
+    gap: 10px;
+  }
+  .inspection-card-model {
+    font-size: 16px;
+  }
+  .inspection-card-bottom {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .inspection-card-action {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .reports-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .mini-report {
+    margin: 16px 16px 0;
+    height: 160px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mini-report,
+  .report-card:hover .mini-report,
+  .report-card:active .mini-report,
+  .report-card:nth-child(2n) .mini-report,
+  .report-card:nth-child(2n):hover .mini-report {
+    transform: none !important;
+  }
+  .inspection-card:hover,
+  .report-card:hover {
+    transform: none !important;
+  }
+}
