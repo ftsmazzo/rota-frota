@@ -3028,3 +3028,314 @@ select,.field select{font-size:15px}
     transform: none !important;
   }
 }
+
+/* ==========================================================================
+   4.4 — EQUIPE (CARDS COMPACTOS E STATUS VIVO)
+   ========================================================================== */
+
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+.team-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 14px 18px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s ease, border-color 0.22s ease;
+  box-sizing: border-box;
+}
+
+.team-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+  border-color: var(--accent);
+}
+
+.team-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.team-card-person {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+/* Avatar de 44px com anel colorido conforme o status:
+   - azul animado girando devagar quando com carro
+   - lima estático quando disponível */
+.team-avatar-ring {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.team-avatar-ring .avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.team-avatar-ring::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.team-avatar-ring.status-active::after {
+  border: 2px dashed var(--info);
+  animation: spinSlow 12s linear infinite;
+}
+
+.team-avatar-ring.status-free::after {
+  border: 2px solid var(--accent);
+}
+
+.team-card-id {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.team-driver-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.team-driver-role {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.team-card-status-col {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* Status vivo à direita: "Com o {Modelo}" + BrPlate sm em escala .8 e LiveDot azul */
+.team-status-active {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.team-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--info);
+  background: var(--info-bg);
+  border: 1px solid var(--info-bg);
+  padding: 4px 10px;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+[data-theme="dark"] .team-status-pill {
+  border-color: rgba(141, 180, 209, 0.25);
+}
+
+.team-plate-scale {
+  transform: scale(0.8);
+  transform-origin: right center;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+/* Ou "Disponível" em --success */
+.team-status-free {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.team-free-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--success);
+  background: var(--success-bg);
+  border: 1px solid var(--success-bg);
+  padding: 4px 10px;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+/* Linha inferior com "Vistorias registradas" usando Odometer 22px e o link "Ver histórico →" */
+.team-card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  margin-top: auto;
+}
+
+.team-card-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.team-stat-count {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1;
+  font-family: var(--font-mono, monospace);
+  font-variant-numeric: tabular-nums;
+}
+
+.team-stat-label {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.team-history-link {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--brand);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+[data-theme="dark"] .team-history-link {
+  color: var(--accent);
+}
+
+.team-card:hover .team-history-link svg {
+  transform: translateX(3px);
+}
+
+/* No celular: 1 pessoa por linha com altura de no máximo 120px */
+@media (max-width: 760px) {
+  .team-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .team-card {
+    padding: 10px 14px;
+    border-radius: 16px;
+    gap: 8px;
+    max-height: 120px;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .team-avatar-ring {
+    width: 40px;
+    height: 40px;
+  }
+
+  .team-avatar-ring .avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
+  }
+
+  .team-driver-name {
+    font-size: 15px;
+  }
+
+  .team-driver-role {
+    font-size: 12px;
+  }
+
+  .team-status-active {
+    gap: 6px;
+  }
+
+  .team-status-pill {
+    font-size: 11px;
+    padding: 3px 8px;
+  }
+
+  .team-plate-scale {
+    transform: scale(0.72);
+    margin-left: -4px;
+  }
+
+  .team-free-badge {
+    font-size: 12px;
+    padding: 3px 8px;
+  }
+
+  .team-card-bottom {
+    padding-top: 8px;
+  }
+
+  .team-stat-count {
+    font-size: 19px;
+  }
+
+  .team-stat-label {
+    font-size: 11px;
+  }
+
+  .team-history-link {
+    font-size: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .team-avatar-ring.status-active::after {
+    animation: none !important;
+  }
+  .team-card:hover {
+    transform: none !important;
+  }
+  .team-card:hover .team-history-link svg {
+    transform: none !important;
+  }
+}

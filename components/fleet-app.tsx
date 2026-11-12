@@ -11,6 +11,7 @@ import {VehicleCard} from "./vehicle-card";
 import {ThemeToggle} from "./theme-toggle";
 import {InspectionCard} from "./inspection-card";
 import {ReportCard} from "./report-card";
+import {TeamCard} from "./team-card";
 import {Report,PhotoView} from "./report";
 import {Avatar,Badge,Modal,SearchBox} from "./common";
 import {UserManager,ChangePassword} from "./user-manager";
@@ -415,7 +416,33 @@ function vehicleCard(v:Vehicle,index:number){return <VehicleCard key={v.id} vehi
  {view==='fuel'&&<FuelPanel data={data} onAdd={startRefueling} admin={user.role==='admin'} online={online} onUpdated={updateRefueling}/>}
  {fuelOpen&&local.refuelingDraft&&<RefuelingForm draft={local.refuelingDraft} data={data} aiReady={aiReady} storageError={storageError} onChange={async draft=>{if(current.current.refuelingDraft?.id!==draft.id)return false;return persist({...current.current,refuelingDraft:draft});}} onClose={()=>setFuelOpen(false)} onSave={async value=>{const clips=current.current.refuelingDraft?.voiceClips||[];if(await persist({...current.current,refuelingDraft:undefined,data:{...current.current.data,refuelings:[value,...(current.current.data.refuelings||[]).filter(r=>r.id!==value.id)]}})){void Promise.allSettled(clips.map(clip=>deleteAudioClip(clip.id)));setFuelOpen(false);setView('fuel');notify('Abastecimento salvo no aparelho. Aguarde a confirmação do envio.');void synchronize();}else throw Error('Não foi possível salvar no aparelho.');}}/>}
  {view==="trips"&&<TripsPanel data={data} onOpen={setTripId}/>}
- {view==="team"&&<><div className="content-toolbar"><span className="quiet">{data.drivers.length} pessoas na operação</span><button className="button secondary" disabled={!online} onClick={()=>setCatalog("driver")}><Plus size={15}/> Adicionar pessoa</button></div><div className="team-grid">{data.drivers.map(driver=>{const history=sorted.filter(i=>i.driverId===driver.id);const active=data.vehicles.find(v=>sorted.find(i=>i.vehicleId===v.id)?.driverId===driver.id&&getVehicleState(v,data.inspections)==="out");return <article className="team-card" key={driver.id}><div className="team-card-main"><Avatar driver={driver}/><div className="team-card-info"><h3>{driver.name}</h3><p>{driver.role}</p></div></div><div className="team-card-status"><span className={"badge "+(active?"blue":"green")}><i/>{active?"Em atividade":"Disponível"}</span></div><div className="team-metrics"><div><strong>{history.length}</strong><small>Vistorias registradas</small></div><div><strong>{active?"Em atividade":"Disponível"}</strong><small>{active?.model||"Sem veículo em uso"}</small></div></div><button className="text-button" onClick={()=>{navigate("inspections");setSearch(driver.name)}}>Ver histórico <ArrowRight size={15}/></button></article>})}</div></>}
+ {view==="team"&&<>
+  <div className="content-toolbar">
+    <span className="quiet">{data.drivers.length} pessoas na operação</span>
+    <button className="button secondary" disabled={!online} onClick={()=>setCatalog("driver")}>
+      <Plus size={15}/> Adicionar pessoa
+    </button>
+  </div>
+  <div className="team-grid">
+    {data.drivers.map((driver, index) => {
+      const history = sorted.filter(i => i.driverId === driver.id);
+      const active = data.vehicles.find(v => sorted.find(i => i.vehicleId === v.id)?.driverId === driver.id && getVehicleState(v, data.inspections) === "out");
+      return (
+        <TeamCard
+          key={driver.id}
+          driver={driver}
+          activeVehicle={active}
+          inspectionsCount={history.length}
+          index={index}
+          onViewHistory={() => {
+            navigate("inspections");
+            setSearch(driver.name);
+          }}
+        />
+      );
+    })}
+  </div>
+</>}
  <footer className="app-footer"><span>rota. <span>Cuidado em cada percurso.</span></span><span>{syncBusy?<><LoaderCircle size={12} className="spin"/> Atualizando…</>:local.lastSync?<><CloudCheck size={13}/> Atualizado às {new Date(local.lastSync).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}</>:<><Clock size={13}/> Histórico local</>}<span className="footer-dot">·</span> Frota interna SST</span></footer></main></div><nav className="bottom-nav" aria-label="Navegação inferior"><button className={"bottom-nav-item "+(view==="overview"?"active":"")} onClick={()=>navigate("overview")}><LayoutDashboard size={20}/><span>Visão geral</span></button><button className={"bottom-nav-item "+(view==="fleet"?"active":"")} onClick={()=>navigate("fleet")}><CarFront size={20}/><span>Veículos</span></button><button className="bottom-nav-action" onClick={()=>startInspection()} aria-label="Registrar"><span className="bottom-nav-fab"><Plus size={22}/></span><span className="bottom-nav-action-label">Registrar</span></button><button className={"bottom-nav-item "+(view==="inspections"?"active":"")} onClick={()=>navigate("inspections")}><ClipboardCheck size={20}/><span>Vistorias</span></button><button className={"bottom-nav-item "+(mobile?"active":"")} onClick={()=>setMobile(true)}><Menu size={20}/><span>Mais</span></button></nav>
  {toast&&<div className="toast" role="status"><CheckCircle2 size={18}/>{toast}</div>}
  {wizard&&local.draft&&<InspectionWizard draft={local.draft} data={data} onChange={setDraft} onClose={()=>setWizard(false)} onFinish={finish} storageError={storageError} onDiscard={async()=>{const clips=current.current.draft?.voiceClips||[];if(await persist({...current.current,draft:undefined})){await Promise.allSettled(clips.map(clip=>deleteAudioClip(clip.id)));setWizard(false);notify("Rascunho descartado.")}}} aiReady={aiReady} notify={notify} onAssistant={()=>setAssistant(true)}/>}

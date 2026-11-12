@@ -127,15 +127,7 @@ body:has(.wizard-overlay, .modal-overlay, .assistant-overlay, .report-overlay) {
  .bottom-nav-action:active .bottom-nav-fab{transform:scale(.92)}
  .bottom-nav-action-label{font-size:11px;font-weight:600;color:var(--ink)}
  .team-grid{grid-template-columns:1fr;gap:10px}
- .team-card{display:flex!important;align-items:center!important;justify-content:space-between!important;padding:12px 14px!important;gap:12px!important;border-radius:12px!important}
- .team-card-main{display:flex!important;align-items:center!important;gap:12px!important;min-width:0!important}
- .team-card-info{min-width:0!important}
- .team-card-info h3{font-size:14px!important;font-weight:600!important;margin:0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;letter-spacing:-0.01em!important}
- .team-card-info p{font-size:12px!important;color:var(--muted)!important;margin:2px 0 0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
- .team-card-status{display:flex!important;flex-shrink:0!important}
- .team-card-status .badge{font-size:12px!important;padding:4px 8px!important}
- .team-card .avatar{height:38px!important;width:38px!important;font-size:13px!important}
- .team-card .team-metrics,.team-card>.text-button{display:none!important}
+ .team-card{display:flex;flex-direction:column;max-height:120px;padding:10px 14px;border-radius:16px;gap:8px;box-sizing:border-box;overflow:hidden}
  .trip-metrics,.trip-filters { grid-template-columns: 1fr 1fr; gap: 12px; }
  .trip-filters > .field { grid-column: 1 / -1; }
  .trip-date-fields { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; min-width: 0; }
