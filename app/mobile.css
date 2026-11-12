@@ -127,15 +127,7 @@ body:has(.wizard-overlay, .modal-overlay, .assistant-overlay, .report-overlay) {
  .bottom-nav-action:active .bottom-nav-fab{transform:scale(.92)}
  .bottom-nav-action-label{font-size:11px;font-weight:600;color:var(--ink)}
  .team-grid{grid-template-columns:1fr;gap:10px}
- .team-card{display:flex!important;align-items:center!important;justify-content:space-between!important;padding:12px 14px!important;gap:12px!important;border-radius:12px!important}
- .team-card-main{display:flex!important;align-items:center!important;gap:12px!important;min-width:0!important}
- .team-card-info{min-width:0!important}
- .team-card-info h3{font-size:14px!important;font-weight:600!important;margin:0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;letter-spacing:-0.01em!important}
- .team-card-info p{font-size:12px!important;color:var(--muted)!important;margin:2px 0 0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
- .team-card-status{display:flex!important;flex-shrink:0!important}
- .team-card-status .badge{font-size:12px!important;padding:4px 8px!important}
- .team-card .avatar{height:38px!important;width:38px!important;font-size:13px!important}
- .team-card .team-metrics,.team-card>.text-button{display:none!important}
+ .team-card{display:flex;flex-direction:column;max-height:120px;padding:10px 14px;border-radius:16px;gap:8px;box-sizing:border-box;overflow:hidden}
  .trip-metrics,.trip-filters { grid-template-columns: 1fr 1fr; gap: 12px; }
  .trip-filters > .field { grid-column: 1 / -1; }
  .trip-date-fields { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; min-width: 0; }
@@ -214,4 +206,95 @@ body:has(.wizard-overlay, .modal-overlay, .assistant-overlay, .report-overlay) {
 
 @media (max-width: 480px) {
   .form-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* 4.7 — Detalhes, Modais Bottom Sheet e Wizard */
+@media (max-width: 760px) {
+  .modal-overlay {
+    align-items: flex-end !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    background: rgba(11, 26, 20, 0.65) !important;
+    backdrop-filter: blur(6px) !important;
+    -webkit-backdrop-filter: blur(6px) !important;
+  }
+
+  .modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 28px 28px 0 0 !important;
+    border-bottom: 0 !important;
+    border-left: 0 !important;
+    border-right: 0 !important;
+    max-height: calc(92dvh - env(safe-area-inset-top, 0px)) !important;
+    padding-bottom: max(12px, env(safe-area-inset-bottom, 0px)) !important;
+    margin: 0 !important;
+    box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.32) !important;
+    animation: modalBottomSheetEnter 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  }
+
+  .modal-drag-handle {
+    display: block !important;
+    width: 36px !important;
+    height: 4px !important;
+    border-radius: 999px !important;
+    background: var(--border) !important;
+    margin: 10px auto 2px !important;
+    flex-shrink: 0 !important;
+  }
+
+  @keyframes modalBottomSheetEnter {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+
+  .wizard-header {
+    height: 64px !important;
+    padding-left: max(12px, env(safe-area-inset-left, 0px)) !important;
+    padding-right: max(12px, env(safe-area-inset-right, 0px)) !important;
+    gap: 10px !important;
+  }
+
+  .wizard-header-progress {
+    display: none !important;
+  }
+
+  .wizard-header-fixed-plate {
+    transform: scale(0.85);
+    transform-origin: right center;
+  }
+
+  .wizard-progress-mobile {
+    display: flex !important;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 16px;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .vehicle-detail-odometers {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .trip-timeline-card {
+    padding: 16px;
+  }
+
+  .trip-odometer-highlight {
+    padding: 16px;
+  }
+
+  .trip-odometer-display {
+    font-size: 32px;
+  }
+
+  .timeline-node-body {
+    padding: 14px;
+  }
 }
