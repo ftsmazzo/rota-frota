@@ -114,3 +114,11 @@ select,.field select{font-size:15px}
 .date-input-wrap:focus-within .date-placeholder{display:none}
 .trip-date-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;min-width:0;grid-column:span 2}
 .trip-date-fields .field{min-width:0;margin-bottom:0}
+
+.bottom-nav{display:none}
+.metric-empty{font-size:13px!important;font-weight:400!important;color:var(--muted)!important;line-height:1.4!important;display:block}
+.team-card-status{display:none}
+.team-card-main{display:block}
+.team-card-info h3{font-size:17px;font-weight:600;margin-top:17px;letter-spacing:-0.02em}
+.team-card-info p{font-size:14px;color:var(--muted);margin-top:6px}
+.team-card .avatar{height:49px;width:49px;font-size:15px}

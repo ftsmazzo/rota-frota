@@ -117,6 +117,25 @@ body:has(.wizard-overlay, .modal-overlay, .assistant-overlay, .report-overlay) {
 .modal .trip-row { flex-wrap: wrap; padding: 14px; }
 .modal .trip-row-icon { display: none; }
 @media(max-width:760px){
+ .main-content{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))!important}
+ .bottom-nav{display:flex;align-items:center;justify-content:space-around;position:fixed;bottom:0;left:0;right:0;height:calc(64px + env(safe-area-inset-bottom,0px));padding:0 4px env(safe-area-inset-bottom,0px);background:var(--surface);border-top:1px solid var(--border);box-shadow:0 -2px 12px rgba(0,0,0,0.06);z-index:45}
+ .bottom-nav-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;flex:1;min-height:48px;min-width:44px;background:transparent;color:var(--muted);font-size:11px;font-weight:500;padding:6px 2px;border:0;border-radius:8px;transition:color .15s ease}
+ .bottom-nav-item.active{color:var(--brand);font-weight:600}
+ [data-theme="dark"] .bottom-nav-item.active{color:var(--accent)}
+ .bottom-nav-action{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;flex:1;min-height:48px;min-width:44px;background:transparent;border:0;padding:0;margin-top:-14px}
+ .bottom-nav-fab{display:flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:50%;background:var(--accent);color:var(--on-accent);box-shadow:0 4px 12px rgba(0,0,0,0.18);transition:transform .15s ease}
+ .bottom-nav-action:active .bottom-nav-fab{transform:scale(.92)}
+ .bottom-nav-action-label{font-size:11px;font-weight:600;color:var(--ink)}
+ .team-grid{grid-template-columns:1fr;gap:10px}
+ .team-card{display:flex!important;align-items:center!important;justify-content:space-between!important;padding:12px 14px!important;gap:12px!important;border-radius:12px!important}
+ .team-card-main{display:flex!important;align-items:center!important;gap:12px!important;min-width:0!important}
+ .team-card-info{min-width:0!important}
+ .team-card-info h3{font-size:14px!important;font-weight:600!important;margin:0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;letter-spacing:-0.01em!important}
+ .team-card-info p{font-size:12px!important;color:var(--muted)!important;margin:2px 0 0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+ .team-card-status{display:flex!important;flex-shrink:0!important}
+ .team-card-status .badge{font-size:12px!important;padding:4px 8px!important}
+ .team-card .avatar{height:38px!important;width:38px!important;font-size:13px!important}
+ .team-card .team-metrics,.team-card>.text-button{display:none!important}
  .trip-metrics,.trip-filters { grid-template-columns: 1fr 1fr; gap: 12px; }
  .trip-filters > .field { grid-column: 1 / -1; }
  .trip-date-fields { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; min-width: 0; }
