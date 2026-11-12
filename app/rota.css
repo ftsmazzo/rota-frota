@@ -4358,3 +4358,248 @@ select,.field select{font-size:15px}
     animation: none !important;
   }
 }
+
+/* -------------------------------------------------------------
+   4.8 — Microinterações finais
+   ------------------------------------------------------------- */
+
+/* 1) Toasts sobem de baixo com fundo --brand, texto branco e ícone */
+@keyframes toastSlideUpFade {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+  }
+  12% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  86% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+}
+
+.toast {
+  position: fixed;
+  bottom: 25px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 22px;
+  border: 1px solid var(--brand-line, rgba(255, 255, 255, 0.18));
+  border-radius: 999px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.32);
+  background: var(--brand) !important;
+  color: #ffffff !important;
+  font-size: 13px;
+  font-weight: 500;
+  max-width: 90vw;
+  pointer-events: none;
+  animation: toastSlideUpFade 4.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+[data-theme="dark"] .toast {
+  background: var(--brand) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.toast-message {
+  color: #ffffff !important;
+  line-height: 1.4;
+}
+
+.toast-icon-check {
+  color: var(--accent) !important;
+  flex-shrink: 0;
+}
+
+.toast-icon-warn {
+  color: var(--warning) !important;
+  flex-shrink: 0;
+}
+
+@media (max-width: 760px) {
+  .toast {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 76px);
+  }
+}
+
+/* 2) Skeleton com brilho (shimmer) nos cards e listas */
+@keyframes skeletonShimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.skeleton-card {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  pointer-events: none;
+}
+
+.skeleton-line {
+  background: var(--surface-2);
+  border-radius: 4px;
+}
+
+.skeleton-box {
+  background: var(--surface-2);
+  border-radius: 8px;
+}
+
+.skeleton-card::after,
+.skeleton-box::after,
+.skeleton-line::after,
+.skeleton-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.28) 40%,
+    rgba(255, 255, 255, 0.52) 50%,
+    rgba(255, 255, 255, 0.28) 60%,
+    transparent 100%
+  );
+  animation: skeletonShimmer 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  pointer-events: none;
+  z-index: 2;
+}
+
+[data-theme="dark"] .skeleton-card::after,
+[data-theme="dark"] .skeleton-box::after,
+[data-theme="dark"] .skeleton-line::after,
+[data-theme="dark"] .skeleton-shimmer::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.04) 40%,
+    rgba(255, 255, 255, 0.12) 50%,
+    rgba(255, 255, 255, 0.04) 60%,
+    transparent 100%
+  );
+}
+
+/* 3) Botões com scale .97 ao pressionar */
+button,
+.button,
+.text-button,
+.icon-button,
+.bottom-nav-action,
+.bottom-nav-item,
+.sample-button,
+.sidebar-copilot-btn,
+.live-hero-cta,
+.prompt-chip,
+.operation-seal,
+.theme-toggle-option,
+.tabs button {
+  transition: transform 0.1s cubic-bezier(0.2, 0, 0, 1), background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+}
+
+button:active:not(:disabled),
+.button:active:not(:disabled),
+.text-button:active:not(:disabled),
+.icon-button:active:not(:disabled),
+.bottom-nav-action:active,
+.bottom-nav-item:active,
+.sample-button:active:not(:disabled),
+.sidebar-copilot-btn:active,
+.live-hero-cta:active,
+.prompt-chip:active:not(:disabled),
+.tabs button:active {
+  transform: scale(0.97) !important;
+}
+
+/* 4) Troca de página com fade + subida de 6px no conteúdo (250ms) */
+@keyframes pageViewEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-view {
+  animation: pageViewEnter 250ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  width: 100%;
+}
+
+/* 5) Faixa âmbar fina no topo com LiveDot */
+.offline-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--warning-bg);
+  color: var(--warning);
+  border-bottom: 1px solid var(--warning);
+  padding: 7px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  width: 100%;
+  z-index: 95;
+  box-sizing: border-box;
+}
+
+[data-theme="dark"] .offline-strip {
+  background: var(--warning-bg);
+  color: var(--warning);
+  border-bottom-color: rgba(242, 164, 58, 0.35);
+}
+
+.offline-strip span {
+  color: var(--warning);
+}
+
+/* Desligar efeitos em prefers-reduced-motion: reduce */
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: translateX(-50%) !important;
+  }
+  .skeleton-card::after,
+  .skeleton-box::after,
+  .skeleton-line::after,
+  .skeleton-shimmer::after {
+    animation: none !important;
+    display: none !important;
+  }
+  button:active,
+  .button:active,
+  .text-button:active,
+  .icon-button:active,
+  .bottom-nav-action:active,
+  .bottom-nav-item:active,
+  .sample-button:active,
+  .sidebar-copilot-btn:active,
+  .live-hero-cta:active,
+  .prompt-chip:active,
+  .tabs button:active {
+    transform: none !important;
+  }
+  .page-view {
+    animation: none !important;
+    transform: none !important;
+  }
+}

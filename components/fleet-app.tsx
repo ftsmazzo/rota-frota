@@ -1,5 +1,5 @@
 "use client";
-import {PageHeader, LiveDot, StatusBar} from "./ui";
+import {PageHeader, LiveDot, StatusBar, VehicleCardSkeleton, StatCardSkeleton, LiveHeroSkeleton} from "./ui";
 import type {AppUser} from "../lib/auth-types";
 import {useState,useEffect,useRef,useCallback} from "react";
 import {LayoutDashboard,X,CarFront,ClipboardCheck,Users,FileText,ArrowUpRight,ArrowRight,ArrowLeft,Plus,ChevronRight,Check,Clock,MapPin,Activity,AlertTriangle,ShieldCheck,Sparkles,Wifi,WifiOff,RefreshCw,CloudCheck,CloudUpload,Menu,CheckCircle2,LoaderCircle,Settings2,Gauge,Route,Fuel} from "lucide-react";
@@ -93,7 +93,30 @@ function vehicleCard(v:Vehicle,index:number){return <VehicleCard key={v.id} vehi
     </div>
   );
 }
- if(!loaded)return <div className="app-shell"><div className="main-shell" style={{marginLeft:0}}><header className="topbar"><div className="breadcrumb"><span className="brand-mark" style={{width:28,height:28,fontSize:24}}>r</span><strong>Preparando sua frota…</strong><LoaderCircle className="spin" size={16}/></div></header><main className="main-content"><div className="stats-grid">{[1,2,3,4].map(k=><div key={k} className="stat-card skeleton-card"><div className="skeleton-line" style={{width:"55%",height:13}}/><div className="skeleton-line" style={{width:"35%",height:28,margin:"10px 0"}}/><div className="skeleton-line" style={{width:"75%",height:12}}/></div>)}</div><div className="vehicle-grid">{[1,2,3].map(k=><div key={k} className="vehicle-card skeleton-card"><div className="skeleton-line" style={{width:"30%",height:13}}/><div className="skeleton-box" style={{height:92,margin:"12px 0"}}/><div className="skeleton-line" style={{width:"65%",height:16}}/><div className="skeleton-line" style={{width:"45%",height:13,margin:"8px 0 14px"}}/></div>)}</div></main></div></div>;
+ if(!loaded)return (
+  <div className="app-shell">
+    <div className="main-shell" style={{marginLeft:0}}>
+      <header className="topbar">
+        <div className="breadcrumb">
+          <span className="brand-mark" style={{width:28,height:28,fontSize:24}}>r</span>
+          <strong>Preparando sua frota…</strong>
+          <LoaderCircle className="spin" size={16}/>
+        </div>
+      </header>
+      <main className="main-content">
+        <div className="overview-hero">
+          <LiveHeroSkeleton/>
+        </div>
+        <div className="stats-grid">
+          {[1,2,3,4].map(k=><StatCardSkeleton key={k} index={k}/>)}
+        </div>
+        <div className="vehicle-grid">
+          {[1,2,3].map(k=><VehicleCardSkeleton key={k} index={k}/>)}
+        </div>
+      </main>
+    </div>
+  </div>
+);
  return <div className="app-shell"><aside className={"sidebar " + (mobile ? "open" : "")}>
         <div className="sidebar-anim-item" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
           <a className="brand" href="#" onClick={e => { e.preventDefault(); navigate("overview"); }} style={{ display: "flex", alignItems: "center", gap: "10px", padding: 0, textDecoration: "none" }}>
@@ -234,8 +257,9 @@ function vehicleCard(v:Vehicle,index:number){return <VehicleCard key={v.id} vehi
           <ThemeToggle variant="sidebar" />
         </div>
       </aside>{mobile&&<button className="mobile-backdrop" aria-label="Fechar menu" onClick={()=>setMobile(false)}/>}
- <div className="main-shell"><header className="topbar"><div className="breadcrumb"><button className="icon-button mobile-menu" onClick={()=>setMobile(true)} aria-label="Abrir menu"><Menu size={22}/></button><span>Workspace</span><ChevronRight size={13}/><strong>{NAV.find(n=>n.id===view)?.label}</strong></div><div className="topbar-right"><span className="demo-label">Frota interna</span><button className={"connection-chip "+(!online?"offline":"")} onClick={()=>setSettings(true)}>{online?<Wifi size={14}/>:<WifiOff size={14}/>}<span>{!online?"Offline":pending?pending+" envio(s) pendente(s)":"Conectado"}</span></button><span className="top-divider"/><ThemeToggle variant="topbar"/><Avatar driver={signedInDriver} small/></div></header><main className="main-content">
- {storageError&&<div className="error-banner"><AlertTriangle size={18}/>{storageError}</div>}{!online&&<div className="offline-banner"><WifiOff size={16}/><span>Você está offline. As vistorias são salvas neste aparelho.</span><small>{local.lastSync?"Última atualização: "+dateTime(local.lastSync):"Histórico ainda não sincronizado"}</small></div>}
+ <div className="main-shell">{!online&&<div className="offline-strip" role="status"><LiveDot color="var(--warning)"/><span>Sem conexão — seus registros ficam salvos no aparelho</span></div>}<header className="topbar"><div className="breadcrumb"><button className="icon-button mobile-menu" onClick={()=>setMobile(true)} aria-label="Abrir menu"><Menu size={22}/></button><span>Workspace</span><ChevronRight size={13}/><strong>{NAV.find(n=>n.id===view)?.label}</strong></div><div className="topbar-right"><span className="demo-label">Frota interna</span><button className={"connection-chip "+(!online?"offline":"")} onClick={()=>setSettings(true)}>{online?<Wifi size={14}/>:<WifiOff size={14}/>}<span>{!online?"Offline":pending?pending+" envio(s) pendente(s)":"Conectado"}</span></button><span className="top-divider"/><ThemeToggle variant="topbar"/><Avatar driver={signedInDriver} small/></div></header><main className="main-content">
+ {storageError&&<div className="error-banner"><AlertTriangle size={18}/>{storageError}</div>}
+ <div key={view} className="page-view">
  {view === "overview" && (
   <div className="page-heading">
     <div>
@@ -444,8 +468,9 @@ function vehicleCard(v:Vehicle,index:number){return <VehicleCard key={v.id} vehi
     })}
   </div>
 </>}
+</div>
  <footer className="app-footer"><span>rota. <span>Cuidado em cada percurso.</span></span><span>{syncBusy?<><LoaderCircle size={12} className="spin"/> Atualizando…</>:local.lastSync?<><CloudCheck size={13}/> Atualizado às {new Date(local.lastSync).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}</>:<><Clock size={13}/> Histórico local</>}<span className="footer-dot">·</span> Frota interna SST</span></footer></main></div><nav className="bottom-nav" aria-label="Navegação inferior"><button className={"bottom-nav-item "+(view==="overview"?"active":"")} onClick={()=>navigate("overview")}><LayoutDashboard size={20}/><span>Visão geral</span></button><button className={"bottom-nav-item "+(view==="fleet"?"active":"")} onClick={()=>navigate("fleet")}><CarFront size={20}/><span>Veículos</span></button><button className="bottom-nav-action" onClick={()=>startInspection()} aria-label="Registrar"><span className="bottom-nav-fab"><Plus size={22}/></span><span className="bottom-nav-action-label">Registrar</span></button><button className={"bottom-nav-item "+(view==="inspections"?"active":"")} onClick={()=>navigate("inspections")}><ClipboardCheck size={20}/><span>Vistorias</span></button><button className={"bottom-nav-item "+(mobile?"active":"")} onClick={()=>setMobile(true)}><Menu size={20}/><span>Mais</span></button></nav>
- {toast&&<div className="toast" role="status"><CheckCircle2 size={18}/>{toast}</div>}
+ {toast&&(()=>{const isError=/não|erro|falha|pendência|indisponível|inválid/i.test(toast);return <div className={`toast ${isError?"toast-error":"toast-success"}`} role="status">{isError?<AlertTriangle size={18} className="toast-icon toast-icon-warn" aria-hidden="true"/>:<CheckCircle2 size={18} className="toast-icon toast-icon-check" aria-hidden="true"/>}<span className="toast-message">{toast}</span></div>;})()}
  {wizard&&local.draft&&<InspectionWizard draft={local.draft} data={data} onChange={setDraft} onClose={()=>setWizard(false)} onFinish={finish} storageError={storageError} onDiscard={async()=>{const clips=current.current.draft?.voiceClips||[];if(await persist({...current.current,draft:undefined})){await Promise.allSettled(clips.map(clip=>deleteAudioClip(clip.id)));setWizard(false);notify("Rascunho descartado.")}}} aiReady={aiReady} notify={notify} onAssistant={()=>setAssistant(true)}/>}
  {tripId&&(()=>{const trip=buildTrips(data.inspections).find(t=>t.id===tripId);if(!trip)return null;return <TripDetail trip={trip} data={data} admin={user.role==="admin"} online={online} onClose={()=>setTripId(undefined)} onInspection={i=>{setTripId(undefined);setReport(i);}} onFinding={openFindingReview} onLinked={async link=>{const next={...current.current,data:{...current.current.data,inspections:current.current.data.inspections.map(i=>i.id===link.returnId?{...i,previousId:link.departureId,linkNote:{note:link.note,at:link.at,actor:link.actor,originalPreviousId:link.originalPreviousId}}:i)}};if(!await persist(next)){current.current=next;setLocal(next);}setTripId(link.departureId);void synchronize();}}/>;})()}
  {report&&<Report inspection={data.inspections.find(i=>i.id===report.id)||report} data={data} onReview={()=>{const i=data.inspections.find(i=>i.id===report.id)||report;const f=i.findings.find(f=>!f.resolved)||i.findings[0];if(f)openFindingReview(i,f);}} onOpenTrip={()=>{const trip=buildTrips(data.inspections).find(t=>t.departure?.id===report.id||t.returned?.id===report.id);if(trip){setReport(undefined);setTripId(trip.id);}}} onClose={()=>setReport(undefined)}/>}
