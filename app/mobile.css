@@ -63,7 +63,7 @@ body:has(.wizard-overlay, .modal-overlay, .assistant-overlay, .report-overlay) {
 .finding-timeline p { white-space: pre-wrap; font-size: 12px; line-height: 1.8; margin: 6px 0; }
 .finding-timeline small { font-size: 12px; color: var(--muted); }
 .trip-metrics { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; margin: 20px 0 15px; }
-.trip-metrics > div { padding: 18px; background: white; border: 1px solid var(--border); border-radius: 12px; }
+.trip-metrics > div { padding: 18px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
 .trip-metrics strong { display: block; font-size: 25px; font-weight: 600; letter-spacing: -0.02em; }
 .trip-metrics span { display: block; color: var(--muted); font-size: 12px; line-height: 1.7; margin-top: 8px; }
 .trip-filters { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; margin-top: 24px; }
@@ -72,7 +72,7 @@ body:has(.wizard-overlay, .modal-overlay, .assistant-overlay, .report-overlay) {
 .trip-date-fields .field { min-width: 0; margin-bottom: 0; }
 .trip-tabs { margin: 20px 0; }
 .trip-list { display: grid; gap: 12px; margin-bottom: 22px; }
-.trip-row { display: flex; align-items: center; gap: 15px; width: 100%; text-align: left; background: white; border: 1px solid var(--border); border-radius: 12px; padding: 18px; color: var(--ink); }
+.trip-row { display: flex; align-items: center; gap: 15px; width: 100%; text-align: left; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; color: var(--ink); }
 .trip-row:hover { border-color: var(--accent); }
 .trip-row-icon { display: grid; place-items: center; width: 40px; height: 40px; background: var(--surface-2); border-radius: 10px; color: var(--success); flex: 0 0 auto; }
 .trip-row > div { flex: 1; min-width: 0; }
@@ -104,7 +104,7 @@ body:has(.wizard-overlay, .modal-overlay, .assistant-overlay, .report-overlay) {
 .comparison-photo-list figcaption { font-size: 12px; color: var(--muted); margin-bottom: 7px; }
 .comparison-photo-list .photo-view { width: 100%; height: 220px; object-fit: contain; background-color: var(--surface-2); border-radius: 9px; }
 .comparison-photo-missing { height: 220px; display: grid; place-items: center; text-align: center; padding: 20px; border: 1px dashed var(--border); background: var(--surface-2); border-radius: 9px; color: var(--muted); font-size: 12px; }
-.trip-finding { display: flex; align-items: flex-start; gap: 15px; padding: 18px; background: white; border: 1px solid var(--border); border-radius: 10px; margin: 12px 0; }
+.trip-finding { display: flex; align-items: flex-start; gap: 15px; padding: 18px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin: 12px 0; }
 .trip-finding > div { flex: 1; min-width: 0; }
 .trip-finding strong { display: block; margin: 12px 0 7px; font-size: 13px; }
 .trip-finding p { font-size: 14px; line-height: 1.8; white-space: pre-wrap; }

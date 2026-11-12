@@ -2,6 +2,7 @@
 import {useMemo,useState} from 'react';
 import {ArrowUpRight,Route} from 'lucide-react';
 import {DateInput,Field,SearchBox} from './common';
+import {CountUp} from './count-up';
 import {dateTime,km,type FleetData} from '../lib/model';
 import {buildTrips,filterTrips,tripTotals,type VehicleTrip} from '../lib/trips';
 export function TripsPanel({data,vehicleId,onOpen}:{data:FleetData;vehicleId?:string;onOpen:(id:string)=>void}){
@@ -9,7 +10,7 @@ export function TripsPanel({data,vehicleId,onOpen}:{data:FleetData;vehicleId?:st
  const selected=useMemo(()=>filterTrips(buildTrips(data.inspections),{vehicleId:vehicleId||vehicle,driverId:driver,from,to,search},data),[data,vehicleId,vehicle,driver,from,to,search]);
  const totals=tripTotals(selected),rows=selected.filter(t=>status==='all'||t.status===status);
  return <section className="trips-panel">
-  <div className="trip-metrics">{[[km(totals.distance),'Km em utilizações encerradas'],[String(totals.completed),'Utilizações encerradas'],[String(totals.active),'Saídas em aberto'],[String(totals.incomplete),'Registros para conferir']].map(([value,label])=><div key={label}><strong>{value}</strong><span>{label}</span></div>)}</div>
+  <div className="trip-metrics">{[[km(totals.distance),'Km em utilizações encerradas'],[String(totals.completed),'Utilizações encerradas'],[String(totals.active),'Saídas em aberto'],[String(totals.incomplete),'Registros para conferir']].map(([value,label])=><div key={label}><strong><CountUp value={value}/></strong><span>{label}</span></div>)}</div>
   <p className="helper">Os quilômetros somam apenas pares válidos de saída e retorno. Registros incompletos não entram no total. O período considera a data do retorno; em saídas abertas, considera a saída.</p>
   <div className="trip-filters">{!vehicleId&&<Field label="Veículo"><select value={vehicle} onChange={e=>{setVehicle(e.target.value);setVisible(20);}}><option value="">Todos os veículos</option>{data.vehicles.map(v=><option key={v.id} value={v.id}>{v.model} · {v.plate}</option>)}</select></Field>}<Field label="Motorista da saída"><select value={driver} onChange={e=>{setDriver(e.target.value);setVisible(20);}}><option value="">Toda a equipe</option>{data.drivers.map(d=><option key={d.id} value={d.id}>{d.name}</option>)}</select></Field><div className="trip-date-fields"><Field label="De"><DateInput value={from} onChange={e=>{setFrom(e.target.value);setVisible(20);}} ariaLabel="Data inicial"/></Field><Field label="Até"><DateInput value={to} min={from||undefined} onChange={e=>{setTo(e.target.value);setVisible(20);}} ariaLabel="Data final"/></Field></div></div>
   <SearchBox value={search} onChange={value=>{setSearch(value);setVisible(20);}} placeholder="Buscar veículo, placa..."/>
