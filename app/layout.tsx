@@ -11,7 +11,10 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#173d32",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f7f8f5" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f1714" },
+  ],
 };
 
 export const metadata: Metadata = {
@@ -33,11 +36,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('theme');if(t==='dark'){document.documentElement.setAttribute('data-theme','dark')}else if(t==='light'){document.documentElement.setAttribute('data-theme','light')}else{document.documentElement.removeAttribute('data-theme')}}catch(e){}})()`,
+          }}
+        />
+      </head>
       <body className="antialiased">{children}<PwaUpdater/></body>
     </html>
   );
 }
-
-
-
