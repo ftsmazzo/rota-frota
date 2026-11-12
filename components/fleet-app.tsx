@@ -1,4 +1,5 @@
 "use client";
+import {PageHeader, LiveDot, StatusBar} from "./ui";
 import type {AppUser} from "../lib/auth-types";
 import {useState,useEffect,useRef,useCallback} from "react";
 import {LayoutDashboard,X,CarFront,ClipboardCheck,Users,FileText,ArrowUpRight,ArrowRight,ArrowLeft,Plus,ChevronRight,Check,Clock,MapPin,Activity,AlertTriangle,ShieldCheck,Sparkles,Wifi,WifiOff,RefreshCw,CloudCheck,CloudUpload,Menu,CheckCircle2,LoaderCircle,Settings2,Gauge,Route,Fuel} from "lucide-react";
@@ -41,6 +42,8 @@ export default function FleetApp({user,onLogout}:{user:AppUser;onLogout:()=>Prom
  const pendingFindings=sorted.flatMap(i=>i.findings.filter(f=>!f.resolved).map(f=>({i,f}))).sort((a,b)=>({high:0,medium:1,low:2}[a.f.severity]-{high:0,medium:1,low:2}[b.f.severity]));
  function openFindingReview(inspection:Inspection,finding:Inspection["findings"][number]){setTripId(undefined);setVehicleDetail(undefined);setReport(undefined);setResolution({inspection,findingId:finding.id,area:finding.area});}
  const counts={available:data.vehicles.filter(v=>getVehicleState(v,data.inspections)==="available").length,out:data.vehicles.filter(v=>getVehicleState(v,data.inspections)==="out").length,attention:data.vehicles.filter(v=>vehicleNeedsAttention(v.id,data.inspections)).length};
+ const inspectionsToday=data.inspections.filter(i=>{const d=i.finishedAt||i.startedAt;if(!d)return false;const dt=new Date(d),now=new Date();return dt.getFullYear()===now.getFullYear()&&dt.getMonth()===now.getMonth()&&dt.getDate()===now.getDate();}).length;
+ const activeDriversCount=data.drivers.filter(d=>data.vehicles.some(v=>sorted.find(i=>i.vehicleId===v.id)?.driverId===d.id&&getVehicleState(v,data.inspections)==="out")).length||counts.out;
  function navigate(next:View,status="all"){setView(next);setFilter(status);setSearch("");setMobile(false)}
  async function startInspection(vehicle?:Vehicle){if(current.current.draft){setWizard(true);return}const v=vehicle||data.vehicles.find(v=>getVehicleState(v,data.inspections)==="available")||data.vehicles[0];if(!v)return;const previous=getActiveDeparture(v.id,data.inspections);if(!previous&&getVehicleState(v,data.inspections)!=="available"){notify("O veículo possui pendências de avaliação ou reparo. Confira o acompanhamento antes de uma nova saída.");setVehicleDetail(v);return;}const draft:Draft={evidenceVersion:2,intake:{version:1},id:crypto.randomUUID(),vehicleId:v.id,driverId:previous?.driverId||data.drivers[0]?.id||"",kind:previous?"return":"departure",startedAt:new Date().toISOString(),odometer:latestOdometer(v,data.inspections),fuel:previous?.fuel??3,destination:previous?.destination||"",answers:{},findings:[],notes:"",photos:[],inspectorName:user.name,previousId:previous?.id,step:0,updatedAt:new Date().toISOString()};if(await persist({...current.current,draft}))setWizard(true)}
  async function startRefueling(vehicleId?:string){if(current.current.refuelingDraft){setFuelOpen(true);return;}const v=data.vehicles.find(v=>v.id===vehicleId)||data.vehicles[0];if(!v){notify('Cadastre um veículo antes de abastecer.');return;}const draft:RefuelingDraft={id:crypto.randomUUID(),vehicleId:v.id,driverId:data.drivers[0]?.id||'',occurredAt:new Date().toISOString(),odometer:latestOdometer(v,data.inspections),station:'',fuelType:'gasoline',liters:0,unitPrice:0,totalPaid:0,discount:0,fullTank:false,gapBefore:false,notes:'',photos:[]};if(await persist({...current.current,refuelingDraft:draft})){setVehicleDetail(undefined);setFuelOpen(true);}}
@@ -194,7 +197,128 @@ export default function FleetApp({user,onLogout}:{user:AppUser;onLogout:()=>Prom
       </aside>{mobile&&<button className="mobile-backdrop" aria-label="Fechar menu" onClick={()=>setMobile(false)}/>}
  <div className="main-shell"><header className="topbar"><div className="breadcrumb"><button className="icon-button mobile-menu" onClick={()=>setMobile(true)} aria-label="Abrir menu"><Menu size={22}/></button><span>Workspace</span><ChevronRight size={13}/><strong>{NAV.find(n=>n.id===view)?.label}</strong></div><div className="topbar-right"><span className="demo-label">Frota interna</span><button className={"connection-chip "+(!online?"offline":"")} onClick={()=>setSettings(true)}>{online?<Wifi size={14}/>:<WifiOff size={14}/>}<span>{!online?"Offline":pending?pending+" envio(s) pendente(s)":"Conectado"}</span></button><span className="top-divider"/><ThemeToggle variant="topbar"/><Avatar driver={signedInDriver} small/></div></header><main className="main-content">
  {storageError&&<div className="error-banner"><AlertTriangle size={18}/>{storageError}</div>}{!online&&<div className="offline-banner"><WifiOff size={16}/><span>Você está offline. As vistorias são salvas neste aparelho.</span><small>{local.lastSync?"Última atualização: "+dateTime(local.lastSync):"Histórico ainda não sincronizado"}</small></div>}
- <div className="page-heading"><div><div className="eyebrow">{view==="overview"?"CUIDADO EM CADA PERCURSO":"GESTÃO DA FROTA"}</div><h1>{view==="overview"?"Sua frota, em boas mãos.":view==="fleet"?"Cada veículo, um histórico.":view==="inspections"?"Vistorias sem complicação.":view==="team"?"Pessoas que movem a operação.":view==="fuel"?"Combustível sob controle.":view==="trips"?"Cada utilização, do início ao retorno.":"Tudo registrado. Bem apresentado."}</h1><p>{view==="overview"?"Uma visão clara dos veículos e da rotina da sua equipe.":view==="fleet"?"Acompanhe disponibilidade, uso e condições de cada carro.":view==="inspections"?"Da saída ao retorno, acompanhe cada conferência.":view==="team"?"Motoristas e responsáveis pelas atividades da frota.":view==="fuel"?"Registre abastecimentos, acompanhe consumo e compare os preços pagos.":view==="trips"?"Compare saída e retorno, acompanhe os quilômetros e consulte todo o histórico.":"Consulte e baixe os relatórios de cada vistoria."}</p></div>{!(view==="overview"||view==="fleet"||view==="team"||view==="fuel")&&<button className="button primary new-inspection" onClick={()=>startInspection()}><Plus size={18}/>{local.draft?"Continuar vistoria":"Nova vistoria"}</button>}</div>
+ {view === "overview" && (
+  <div className="page-heading">
+    <div>
+      <div className="eyebrow">CUIDADO EM CADA PERCURSO</div>
+      <h1>Sua frota, em boas mãos.</h1>
+      <p>Uma visão clara dos veículos e da rotina da sua equipe.</p>
+    </div>
+  </div>
+ )}
+ {view === "fleet" && (
+  <PageHeader
+    eyebrow="GESTÃO DA FROTA"
+    title="Cada veículo, um histórico."
+    subtitle="Acompanhe disponibilidade, uso e condições de cada carro."
+    summary={
+      <div className="page-header-chip page-header-chip-status">
+        <div className="page-header-chip-labels">
+          <span className="chip-part available"><strong>{counts.available}</strong> {counts.available === 1 ? "livre" : "livres"}</span>
+          <span className="chip-sep">·</span>
+          <span className="chip-part out"><strong>{counts.out}</strong> na rua</span>
+          <span className="chip-sep">·</span>
+          <span className="chip-part attention"><strong>{counts.attention}</strong> atenção</span>
+        </div>
+        <StatusBar available={counts.available} out={counts.out} attention={counts.attention} height={6} />
+      </div>
+    }
+  />
+ )}
+ {view === "trips" && (
+  <PageHeader
+    eyebrow="GESTÃO DA FROTA"
+    title="Cada utilização, do início ao retorno."
+    subtitle="Compare saída e retorno, acompanhe os quilômetros e consulte todo o histórico."
+    summary={
+      <div className="page-header-chip">
+        <LiveDot color={counts.out > 0 ? "var(--info)" : "var(--muted)"} />
+        <span><strong>{counts.out}</strong> na rua agora</span>
+        <span className="chip-sep">·</span>
+        <span><strong>{buildTrips(data.inspections).length}</strong> utilizações</span>
+      </div>
+    }
+    actions={
+      <button className="button primary new-inspection" onClick={()=>startInspection()}>
+        <Plus size={18}/>{local.draft?"Continuar vistoria":"Nova vistoria"}
+      </button>
+    }
+  />
+ )}
+ {view === "fuel" && (
+  <PageHeader
+    eyebrow="GESTÃO DA FROTA"
+    title="Combustível sob controle."
+    subtitle="Registre abastecimentos, acompanhe consumo e compare os preços pagos."
+    summary={
+      <div className="page-header-chip">
+        <LiveDot color="var(--accent)" />
+        <span><strong>{(data.refuelings || []).length}</strong> {(data.refuelings || []).length === 1 ? "abastecimento" : "abastecimentos"}</span>
+        <span className="chip-sep">·</span>
+        <span><strong>{data.vehicles.length}</strong> veículos</span>
+      </div>
+    }
+  />
+ )}
+ {view === "inspections" && (
+  <PageHeader
+    eyebrow="GESTÃO DA FROTA"
+    title="Vistorias sem complicação."
+    subtitle="Da saída ao retorno, acompanhe cada conferência."
+    summary={
+      <div className="page-header-chip">
+        <LiveDot color="var(--accent)" />
+        <span><strong>{inspectionsToday}</strong> hoje</span>
+        <span className="chip-sep">·</span>
+        <span><strong>{data.inspections.length}</strong> total</span>
+      </div>
+    }
+    actions={
+      <button className="button primary new-inspection" onClick={()=>startInspection()}>
+        <Plus size={18}/>{local.draft?"Continuar vistoria":"Nova vistoria"}
+      </button>
+    }
+  />
+ )}
+ {view === "team" && (
+  <PageHeader
+    eyebrow="GESTÃO DA FROTA"
+    title="Pessoas que movem a operação."
+    subtitle="Motoristas e responsáveis pelas atividades da frota."
+    summary={
+      <div className="page-header-chip">
+        <LiveDot color={activeDriversCount > 0 ? "var(--info)" : "var(--muted)"} />
+        <span><strong>{activeDriversCount}</strong> na rua</span>
+        <span className="chip-sep">·</span>
+        <span><strong>{data.drivers.length}</strong> na equipe</span>
+      </div>
+    }
+  />
+ )}
+ {view === "reports" && (
+  <PageHeader
+    eyebrow="GESTÃO DA FROTA"
+    title="Tudo registrado. Bem apresentado."
+    subtitle="Consulte e baixe os relatórios de cada vistoria."
+    summary={
+      <div className="page-header-chip">
+        <LiveDot color="var(--accent)" />
+        <span><strong>{data.inspections.length}</strong> {data.inspections.length === 1 ? "relatório" : "relatórios"}</span>
+        {pendingFindings.length > 0 && (
+          <>
+            <span className="chip-sep">·</span>
+            <span className="chip-part attention"><strong>{pendingFindings.length}</strong> {pendingFindings.length === 1 ? "pendência" : "pendências"}</span>
+          </>
+        )}
+      </div>
+    }
+    actions={
+      <button className="button primary new-inspection" onClick={()=>startInspection()}>
+        <Plus size={18}/>{local.draft?"Continuar vistoria":"Nova vistoria"}
+      </button>
+    }
+  />
+ )}
  {view==="overview"&&<><div className="overview-hero"><LiveHero vehicles={data.vehicles} inspections={data.inspections} drivers={data.drivers} counts={counts} getVehicleState={getVehicleState} onStartInspection={()=>startInspection()}/><section className="ai-hero"><div className="ai-hero-top"><span><Sparkles size={23}/></span><span className="ai-tag">ASSISTENTE ROTA</span><ArrowUpRight size={18}/></div><h2>Menos digitação.<br/> Mais atenção.</h2><p>Transforme suas observações em informações organizadas, com ajuda de IA.</p><button className="text-button" onClick={()=>setAssistant(true)}>Conversar com o assistente <ArrowRight size={16}/></button></section></div>
  <div className="stats-grid">{[{icon:CarFront,label:"Veículos na frota",value:data.vehicles.length,sub:"Sua operação em um só lugar",status:"all",color:"neutral"},{icon:CheckCircle2,label:"Disponíveis",value:counts.available,sub:"Prontos para a próxima saída",status:"available",color:"green"},{icon:Route,label:"Em uso",value:counts.out,sub:"Em atividades com a equipe",status:"out",color:"blue"},{icon:AlertTriangle,label:"Precisam de atenção",value:counts.attention,sub:"Confira antes de liberar",status:"attention",color:"amber"}].map(s=><button className="stat-card" key={s.label} onClick={()=>navigate("fleet",s.status)}><div><span>{s.label}</span><span className={"stat-icon "+s.color}><s.icon size={18}/></span></div><strong><CountUp value={String(s.value).padStart(2,"0")}/></strong><small><i className={s.color}/>{s.sub}</small></button>)}</div>
  <div className="section-heading"><div><h2>De olho na frota</h2><span>Disponibilidade e condições dos veículos</span></div><button className="text-button" onClick={()=>navigate("fleet")}>Ver todos os veículos <ArrowRight size={15}/></button></div><div className="vehicle-grid overview-fleet">{data.vehicles.slice(0,3).map(vehicleCard)}</div><div className="overview-bottom"><section className="recent-panel"><div className="section-heading"><div><h2>Últimas vistorias</h2><span>Os registros mais recentes da operação</span></div><button className="icon-button" aria-label="Ver todas as vistorias" onClick={()=>navigate("inspections")}><ArrowUpRight size={19}/></button></div>{table(sorted.slice(0,4))}</section><aside className="attention-panel"><div className="attention-title"><span><Activity size={19}/></span><h2>Para acompanhar</h2></div>{pendingFindings.slice(0,2).map(({i,f})=><button className="attention-item" key={i.id+f.id} onClick={()=>openFindingReview(i,f)}><span className={"attention-dot "+f.severity}/><div><small>{data.vehicles.find(v=>v.id===i.vehicleId)?.model}</small><strong>{f.area}</strong><p>{f.description}</p><span>Acompanhar ocorrência <ArrowUpRight size={12}/></span></div></button>)}{!pendingFindings.length&&<p className="helper">Nenhum apontamento pendente.</p>}<div className="attention-note"><ShieldCheck size={17}/><span>O cuidado diário mantém a operação em movimento.</span></div></aside></div></>}
