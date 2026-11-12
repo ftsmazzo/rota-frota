@@ -35,15 +35,15 @@ body:has(.wizard-overlay, .modal-overlay, .assistant-overlay, .report-overlay) {
 .car-map.interactive { touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; }
 .car-map.interactive:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 10px; }
 .car-map svg { display: block; }
-.damage-selection-status { display: grid; gap: 6px; margin-top: 12px; padding: 12px; border-radius: 9px; background: var(--surface-2); color: var(--ink); font-size: 11px; line-height: 1.6; }
-.damage-selection-status span { color: var(--muted); font-size: 10px; }
+.damage-selection-status { display: grid; gap: 6px; margin-top: 12px; padding: 12px; border-radius: 9px; background: var(--surface-2); color: var(--ink); font-size: 12px; line-height: 1.6; }
+.damage-selection-status span { color: var(--muted); font-size: 12px; }
 .damage-selection-status .text-button { justify-self: start; min-height: 36px; }
 
 .vehicle-findings { margin: 22px 0; }
 .pending-finding { display: grid; gap: 9px; padding: 16px; margin: 14px 0; border: 1px solid var(--border); border-radius: 11px; background: var(--surface); }
-.pending-finding > strong { font-size: 13px; }
+.pending-finding > strong { font-size: 14px; }
 .pending-finding p, .closed-finding p, .resolution-note p { font-size: 12px; line-height: 1.8; white-space: pre-wrap; }
-.pending-finding small, .closed-finding small, .resolution-note small { color: var(--muted); font-size: 10px; line-height: 1.7; }
+.pending-finding small, .closed-finding small, .resolution-note small { color: var(--muted); font-size: 12px; line-height: 1.7; }
 .pending-finding > .badge, .pending-finding > .button { justify-self: start; }
 .closed-finding { display: grid; gap: 8px; padding: 16px 0; border-bottom: 1px solid var(--border); }
 .closed-finding strong { display: flex; align-items: center; gap: 7px; color: var(--success); font-size: 12px; }
@@ -59,13 +59,13 @@ body:has(.wizard-overlay, .modal-overlay, .assistant-overlay, .report-overlay) {
 .finding-timeline { list-style: none; padding: 0 0 0 16px; margin: 20px 0 28px 5px; border-left: 2px solid var(--border); }
 .finding-timeline li { position: relative; padding: 0 0 20px 10px; }
 .finding-timeline li:before { content: ''; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); position: absolute; left: -22px; top: 4px; }
-.finding-timeline strong { font-size: 12px; }
+.finding-timeline strong { font-size: 14px; }
 .finding-timeline p { white-space: pre-wrap; font-size: 12px; line-height: 1.8; margin: 6px 0; }
-.finding-timeline small { font-size: 10px; color: var(--muted); }
+.finding-timeline small { font-size: 12px; color: var(--muted); }
 .trip-metrics { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; margin: 20px 0 15px; }
 .trip-metrics > div { padding: 18px; background: white; border: 1px solid var(--border); border-radius: 12px; }
-.trip-metrics strong { display: block; font-size: 25px; font-weight: 600; letter-spacing: -.7px; }
-.trip-metrics span { display: block; color: var(--muted); font-size: 10px; line-height: 1.7; margin-top: 8px; }
+.trip-metrics strong { display: block; font-size: 25px; font-weight: 600; letter-spacing: -0.02em; }
+.trip-metrics span { display: block; color: var(--muted); font-size: 12px; line-height: 1.7; margin-top: 8px; }
 .trip-filters { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; margin-top: 24px; }
 .trip-filters .field { min-width: 0; }
 .trip-tabs { margin: 20px 0; }
@@ -75,23 +75,23 @@ body:has(.wizard-overlay, .modal-overlay, .assistant-overlay, .report-overlay) {
 .trip-row-icon { display: grid; place-items: center; width: 40px; height: 40px; background: var(--surface-2); border-radius: 10px; color: var(--success); flex: 0 0 auto; }
 .trip-row > div { flex: 1; min-width: 0; }
 .trip-row strong { font-size: 13px; line-height: 1.7; }
-.trip-row p { font-size: 11px; line-height: 1.7; margin: 6px 0; }
-.trip-row small { display: block; font-size: 10px; color: var(--muted); line-height: 1.8; }
+.trip-row p { font-size: 14px; line-height: 1.7; margin: 6px 0; }
+.trip-row small { display: block; font-size: 12px; color: var(--muted); line-height: 1.8; }
 .trip-row .plate { display: inline-block; margin-left: 8px; }
 .trip-detail-scroll { padding: 25px; }
 .trip-sheet { max-width: 1100px; margin: auto; background: var(--surface); padding: 35px; border: 1px solid var(--border); border-radius: 14px; }
-.trip-sheet > h1 { font-size: 29px; letter-spacing: -.7px; margin: 12px 0 10px; }
+.trip-sheet > h1 { font-size: 29px; letter-spacing: -0.02em; margin: 12px 0 10px; }
 .trip-sheet > p { line-height: 1.8; font-size: 12px; color: var(--muted); margin: 10px 0 20px; }
-.trip-sheet > h2 { font-size: 19px; margin: 32px 0 18px; font-weight: 600; letter-spacing: -.4px; }
+.trip-sheet > h2 { font-size: 19px; margin: 32px 0 18px; font-weight: 600; letter-spacing: -0.02em; }
 .trip-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 24px 0; }
 .trip-summary > div { padding: 20px; border-radius: 10px; background: var(--surface-2); }
-.trip-summary small { color: var(--muted); font-size: 10px; display: block; }
+.trip-summary small { color: var(--muted); font-size: 12px; display: block; }
 .trip-summary strong { display: block; font-size: 22px; margin-top: 9px; }
 .comparison-columns { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 20px; }
 .comparison-columns > section { padding: 20px; background: var(--surface-2); border-radius: 10px; min-width: 0; }
 .comparison-columns h3 { font-size: 13px; margin: 0 0 14px; }
 .comparison-columns > section > strong { display: block; font-size: 21px; margin-bottom: 10px; }
-.comparison-columns p { font-size: 12px; line-height: 1.8; margin-bottom: 10px; overflow-wrap: anywhere; }
+.comparison-columns p { font-size: 14px; line-height: 1.8; margin-bottom: 10px; overflow-wrap: anywhere; }
 .comparison-columns .button { margin-top: 10px; }
 .comparison-checklist > div { display: grid; grid-template-columns: minmax(0,2fr) minmax(0,1fr) minmax(0,1fr); gap: 12px; padding: 13px; border-bottom: 1px solid var(--border); font-size: 12px; line-height: 1.7; }
 .comparison-checklist-head { background: var(--surface-2); color: var(--ink); }
@@ -99,13 +99,13 @@ body:has(.wizard-overlay, .modal-overlay, .assistant-overlay, .report-overlay) {
 .comparison-photo-list { display: grid; gap: 25px; margin-top: 20px; }
 .comparison-photo-list h3 { font-size: 14px; margin-bottom: 12px; }
 .comparison-photo-list figure { margin: 0; min-width: 0; }
-.comparison-photo-list figcaption { font-size: 10px; color: var(--muted); margin-bottom: 7px; }
+.comparison-photo-list figcaption { font-size: 12px; color: var(--muted); margin-bottom: 7px; }
 .comparison-photo-list .photo-view { width: 100%; height: 220px; object-fit: contain; background-color: var(--surface-2); border-radius: 9px; }
 .comparison-photo-missing { height: 220px; display: grid; place-items: center; text-align: center; padding: 20px; border: 1px dashed var(--border); background: var(--surface-2); border-radius: 9px; color: var(--muted); font-size: 12px; }
 .trip-finding { display: flex; align-items: flex-start; gap: 15px; padding: 18px; background: white; border: 1px solid var(--border); border-radius: 10px; margin: 12px 0; }
 .trip-finding > div { flex: 1; min-width: 0; }
 .trip-finding strong { display: block; margin: 12px 0 7px; font-size: 13px; }
-.trip-finding p { font-size: 12px; line-height: 1.8; white-space: pre-wrap; }
+.trip-finding p { font-size: 14px; line-height: 1.8; white-space: pre-wrap; }
 .trip-event { border-left: 2px solid var(--border); padding-left: 12px; margin-top: 15px; color: var(--muted); }
 .trip-link-form { border: 1px solid var(--warning); border-radius: 11px; padding: 20px; margin-top: 24px; background: var(--warning-bg); }
 .trip-link-form > h3 { font-size: 16px; margin-bottom: 10px; }
@@ -118,16 +118,16 @@ body:has(.wizard-overlay, .modal-overlay, .assistant-overlay, .report-overlay) {
  .trip-metrics,.trip-filters { grid-template-columns: 1fr 1fr; }
  .trip-metrics > div { padding: 15px; }.trip-metrics strong { font-size: 22px; }
  .trip-row { padding: 15px; gap: 10px; flex-wrap: wrap; }.trip-row-icon { display: none; }.trip-row .plate { margin: 5px 0 0; }
- .trip-row strong .plate { display: block; width: fit-content; }.trip-row small { font-size: 9px; }
+ .trip-row strong .plate { display: block; width: fit-content; }.trip-row small { font-size: 12px; }
  .trip-detail-scroll { padding: 12px; }.trip-sheet { padding: 20px 16px; }.trip-sheet > h1 { font-size: 25px; }
  .trip-summary { gap: 10px; }.trip-summary > div { padding: 14px; }.trip-summary strong { font-size: 18px; line-height: 1.4; }
  .comparison-columns { gap: 10px; }.comparison-columns > section { padding: 13px; }.comparison-columns > section > strong { font-size: 17px; }
- .comparison-columns p { font-size: 11px; }.comparison-columns .button { white-space: normal; padding: 10px; line-height: 1.6; height: auto; }
- .comparison-checklist > div { font-size: 10px; padding: 11px 6px; gap: 6px; }
- .comparison-photo-list .photo-view,.comparison-photo-missing { height: 145px; }.comparison-photo-missing { font-size: 10px; padding: 12px; }
+ .comparison-columns p { font-size: 14px; }.comparison-columns .button { white-space: normal; padding: 10px; line-height: 1.6; height: auto; }
+ .comparison-checklist > div { font-size: 14px; padding: 11px 6px; gap: 6px; }
+ .comparison-photo-list .photo-view,.comparison-photo-missing { height: 145px; }.comparison-photo-missing { font-size: 12px; padding: 12px; }
  .trip-finding { flex-direction: column; }.trip-sheet > h2 { font-size: 17px; }.trip-link-form { padding: 16px; }
 }
-.report-followup { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 22px; background: var(--warning-bg); border-bottom: 1px solid var(--border); font-size: 11px; line-height: 1.6; }
+.report-followup { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 22px; background: var(--warning-bg); border-bottom: 1px solid var(--border); font-size: 12px; line-height: 1.6; }
 .report-followup.complete { background: var(--success-bg); border-color: var(--border); color: var(--success); }
 @media screen {
   .report-overlay { display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; }
@@ -138,7 +138,7 @@ body:has(.wizard-overlay, .modal-overlay, .assistant-overlay, .report-overlay) {
 .app-update { position: fixed; bottom: max(16px, env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); z-index: 200; display: flex; align-items: center; gap: 12px; width: min(600px, calc(100% - 24px)); padding: 16px; border: 1px solid var(--border); border-radius: 13px; background: var(--surface-2); color: var(--ink); box-shadow: var(--shadow); }
 .app-update > div { flex: 1; min-width: 0; }
 .app-update strong { display: block; font-size: 13px; margin-bottom: 4px; }
-.app-update p { font-size: 11px; line-height: 1.6; }
+.app-update p { font-size: 14px; line-height: 1.6; }
 .app-update .button { min-height: 44px; }
 
 @media (max-width: 1024px), (any-pointer: coarse) {

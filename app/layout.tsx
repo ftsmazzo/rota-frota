@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
 import "./rota.css";
 import "./report.css";
 import "./auth.css";
@@ -6,6 +7,13 @@ import "./mobile.css";
 import "./evolution.css";
 import {PwaUpdater} from '../components/pwa-updater';
 import {APP_RELEASE} from '../lib/release';
+
+
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-inter",
+});
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -44,7 +52,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="antialiased">{children}<PwaUpdater/></body>
+      <body className={`${inter.className} ${inter.variable} antialiased`}>{children}<PwaUpdater/></body>
     </html>
   );
 }
