@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./rota.css";
 import "./report.css";
 import "./auth.css";
@@ -13,6 +13,12 @@ const inter = Inter({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-inter",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-mono",
 });
 
 export const viewport: Viewport = {
@@ -52,7 +58,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${inter.className} ${inter.variable} antialiased`}>{children}<PwaUpdater/></body>
+      <body className={`${inter.className} ${inter.variable} ${jetbrainsMono.variable} antialiased`}>{children}<PwaUpdater/></body>
     </html>
   );
 }

@@ -208,7 +208,8 @@ body:has(.wizard-overlay, .modal-overlay, .assistant-overlay, .report-overlay) {
   .report-scroll { height: auto; }
   .wizard-layout { min-height: calc(100dvh - 69px); }
   .wizard-actions, .app-footer { padding-bottom: max(22px, env(safe-area-inset-bottom, 0px)); }
-  .answer-buttons button, .fuel-selector button, .tabs button { min-height: 44px; }
+  .fuel-selector button, .tabs button { min-height: 44px; }
+  .answer-buttons button { min-height: 52px; font-size: 15px; }
 }
 
 @media (max-width: 480px) {
