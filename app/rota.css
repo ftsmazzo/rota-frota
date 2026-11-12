@@ -17,6 +17,8 @@
   --shadow: 0 1px 2px #18372c0f, 0 8px 24px #18372c0a;
   --shadow-hover: 0 4px 12px #18372c14, 0 12px 32px #18372c14;
   --hero-glow-opacity: 0.15;
+  --accent-ink: #4f6b1f;
+  --track: #e9eee3;
   --stage-free: #f1f6e8;
   --stage-move: #eef3f7;
   --stage-warn: #fbf4e8;
@@ -57,6 +59,8 @@
   --car-line: #5d6f66;
   --glass: #0f1f19;
   --hero-glow-opacity: 0.3;
+  --accent-ink: #d6ec9a;
+  --track: #24342c;
   --green: var(--brand);
   --lime: var(--accent);
   --amber: var(--warning);
@@ -92,6 +96,8 @@
     --car-line: #5d6f66;
     --glass: #0f1f19;
   --hero-glow-opacity: 0.3;
+  --accent-ink: #d6ec9a;
+  --track: #24342c;
     --green: var(--brand);
     --lime: var(--accent);
     --amber: var(--warning);
@@ -1288,5 +1294,63 @@ select,.field select{font-size:15px}
   .rise {
     animation: none !important;
     transform: none !important;
+  }
+}
+
+/* 2.8 — INDICADORES DE UTILIZAÇÕES COM NÚMEROS ANIMADOS */
+.trips-indicator-block {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  margin: 20px 0 15px !important;
+}
+.trips-panel .trip-metrics.trips-indicator-block > div {
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+.trips-panel .trip-metrics.trips-indicator-block span {
+  margin-top: 0;
+}
+.trips-indicator-block .card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.trips-indicator-block .card:hover,
+.trips-indicator-block .card:active {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+.odo {
+  display: inline-block;
+  height: 1em;
+  overflow: hidden;
+  line-height: 1;
+  vertical-align: top;
+}
+.odo-col {
+  display: flex;
+  flex-direction: column;
+  transition: transform 1.4s cubic-bezier(0.16, 0.84, 0.24, 1);
+}
+.odo-col span {
+  height: 1em;
+  line-height: 1;
+  display: block;
+}
+.trip-metrics-bar {
+  transform-origin: bottom;
+  transition: transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.trip-ring {
+  transition: stroke-dashoffset 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .odo-col,
+  .trip-metrics-bar,
+  .trip-ring,
+  .trips-indicator-block .card {
+    transition: none !important;
   }
 }
