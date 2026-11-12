@@ -68,6 +68,8 @@ body:has(.wizard-overlay, .modal-overlay, .assistant-overlay, .report-overlay) {
 .trip-metrics span { display: block; color: var(--muted); font-size: 12px; line-height: 1.7; margin-top: 8px; }
 .trip-filters { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; margin-top: 24px; }
 .trip-filters .field { min-width: 0; }
+.trip-date-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; min-width: 0; grid-column: span 2; }
+.trip-date-fields .field { min-width: 0; margin-bottom: 0; }
 .trip-tabs { margin: 20px 0; }
 .trip-list { display: grid; gap: 12px; margin-bottom: 22px; }
 .trip-row { display: flex; align-items: center; gap: 15px; width: 100%; text-align: left; background: white; border: 1px solid var(--border); border-radius: 12px; padding: 18px; color: var(--ink); }
@@ -115,7 +117,11 @@ body:has(.wizard-overlay, .modal-overlay, .assistant-overlay, .report-overlay) {
 .modal .trip-row { flex-wrap: wrap; padding: 14px; }
 .modal .trip-row-icon { display: none; }
 @media(max-width:760px){
- .trip-metrics,.trip-filters { grid-template-columns: 1fr 1fr; }
+ .trip-metrics,.trip-filters { grid-template-columns: 1fr 1fr; gap: 12px; }
+ .trip-filters > .field { grid-column: 1 / -1; }
+ .trip-date-fields { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; min-width: 0; }
+ .trip-date-fields .field { min-width: 0; }
+ .tabs-wrap { width: 100%; min-width: 0; }
  .trip-metrics > div { padding: 15px; }.trip-metrics strong { font-size: 22px; }
  .trip-row { padding: 15px; gap: 10px; flex-wrap: wrap; }.trip-row-icon { display: none; }.trip-row .plate { margin: 5px 0 0; }
  .trip-row strong .plate { display: block; width: fit-content; }.trip-row small { font-size: 12px; }
@@ -144,8 +150,11 @@ body:has(.wizard-overlay, .modal-overlay, .assistant-overlay, .report-overlay) {
 @media (max-width: 1024px), (any-pointer: coarse) {
   /* iOS enlarges focused controls below 16px. Keep every editable surface legible. */
   html body :is(input, select, textarea, [contenteditable="true"]) {
-    font-size: 16px;
+    font-size: 16px !important;
     scroll-margin-block: 90px;
+  }
+  .date-placeholder {
+    font-size: 16px;
   }
 
   html body input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]),
